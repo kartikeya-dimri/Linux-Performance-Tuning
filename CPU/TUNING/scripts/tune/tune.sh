@@ -2,31 +2,32 @@
 # ============================================================
 # tune.sh — CPU Tuning Experiments
 # ============================================================
-# Usage: ./tune.sh <EXPERIMENT> [RUNS] [ITERATIONS]
+# Usage: ./tune.sh <EXPERIMENT> [RUNS] [DURATION]
 #
 #   EXPERIMENT options:
 #     1  — taskset: pin workload to single core (avoid scheduler bounce)
 #     2  — parallel: run 4 workers across 4 cores (parallelism speedup)
 #     3  — both: taskset + parallel combined (4 workers, pinned to cores 0-3)
 #
-#   RUNS       : number of measurement runs (default: 5)
-#   ITERATIONS : sieve iterations per run   (default: 80000)
+#   RUNS     : number of measurement runs (default: 5)
+#   DURATION : seconds per worker         (default: 10)
 #
 # Results written to:
-#   after_tuning/experiment_1_taskset_single_core/
-#   after_tuning/experiment_2_parallel_4_workers/
-#   after_tuning/experiment_3_taskset_plus_parallel/
+#   after_tuning/experiment_1/   taskset
+#   after_tuning/experiment_2/   parallel
+#   after_tuning/experiment_3/   both
 # ============================================================
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOAD_SCRIPT="$SCRIPT_DIR/../load/generate_load.sh"
+MEASURE_SCRIPT="$SCRIPT_DIR/../measure/measure.sh"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-EXPERIMENT=${1:?'Usage: tune.sh <EXPERIMENT: 1|2|3> [RUNS] [ITERATIONS]'}
+EXPERIMENT=${1:?'Usage: tune.sh <EXPERIMENT: 1|2|3> [RUNS] [DURATION]'}
 RUNS=${2:-5}
-ITERATIONS=${3:-80000}
+DURATION=${3:-10}
 
 # ── Validate experiment number ───────────────────────────────
 if ! [[ "$EXPERIMENT" =~ ^[123]$ ]]; then
@@ -47,21 +48,21 @@ case "$EXPERIMENT" in
     1)
         LABEL="taskset_single_core"
         DESCRIPTION="Pin 1 worker to core 0 — eliminates scheduler migration"
-        WORKERS=1
+        INTENSITY=1
         USE_TASKSET=true
         CORES="0"
         ;;
     2)
         LABEL="parallel_4_workers"
         DESCRIPTION="4 workers across all cores — parallelism speedup"
-        WORKERS=4
+        INTENSITY=4
         USE_TASKSET=false
         CORES=""
         ;;
     3)
         LABEL="taskset_plus_parallel"
         DESCRIPTION="4 workers pinned to cores 0-3 — combined tuning"
-        WORKERS=4
+        INTENSITY=4
         USE_TASKSET=true
         CORES="0-3"
         ;;
@@ -84,26 +85,26 @@ mkdir -p "$OUT_DIR"
     else
         echo "taskset=no"
     fi
-    echo "workers=$WORKERS"
+    echo "intensity=$INTENSITY"
     echo ""
     echo "[cpu_governor]"
     cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unavailable"
     echo ""
     echo "[run_params]"
-    echo "runs=$RUNS  workers=$WORKERS  iterations=$ITERATIONS"
+    echo "runs=$RUNS  intensity=$INTENSITY  duration=${DURATION}s"
 } > "$OUT_DIR/environment.txt"
 
 cat "$OUT_DIR/environment.txt"
 echo ""
 
-# ── Measurement loop with tuning applied ─────────────────────
+# ── Custom measurement loop with tuning applied ──────────────
 RAW="$OUT_DIR/raw.txt"
 SUMMARY="$OUT_DIR/summary.txt"
 
 {
     echo "# Tuning Experiment $EXPERIMENT — $(date '+%Y-%m-%d %H:%M:%S')"
     echo "# label=$LABEL"
-    echo "# workers=$WORKERS  iterations=$ITERATIONS  runs=$RUNS"
+    echo "# intensity=$INTENSITY  duration=${DURATION}s  runs=$RUNS"
     echo "# run_id | elapsed_s | cpu_avg_%"
 } > "$RAW"
 
@@ -119,33 +120,32 @@ print(total, idle)
 
 echo "=============================================="
 echo " Experiment $EXPERIMENT: $DESCRIPTION"
-echo " Runs=$RUNS  Workers=$WORKERS  Iterations=$ITERATIONS"
+echo " Runs=$RUNS  Intensity=$INTENSITY  Duration=${DURATION}s"
 echo "=============================================="
 
-# ── Warm-up (discarded) ──────────────────────────────────────
+# Warm-up
 echo -n "[tune] Warm-up (discarded) ... "
 if [[ "$USE_TASKSET" == "true" ]]; then
-    taskset -c "$CORES" bash "$LOAD_SCRIPT" "$ITERATIONS" "$WORKERS" > /dev/null 2>&1
+    taskset -c "$CORES" bash "$LOAD_SCRIPT" "$INTENSITY" "$DURATION" > /dev/null 2>&1
 else
-    bash "$LOAD_SCRIPT" "$ITERATIONS" "$WORKERS" > /dev/null 2>&1
+    bash "$LOAD_SCRIPT" "$INTENSITY" "$DURATION" > /dev/null 2>&1
 fi
 echo "done"
 sleep 2
 
-# ── Measurement runs ─────────────────────────────────────────
 for (( run=1; run<=RUNS; run++ )); do
     echo -n "[tune] Run $run/$RUNS ... "
 
     read TOTAL_BEFORE IDLE_BEFORE <<< "$(read_cpu_ticks)"
 
     if [[ "$USE_TASKSET" == "true" ]]; then
-        ELAPSED=$(python3 - "$LOAD_SCRIPT" "$ITERATIONS" "$WORKERS" "$CORES" <<'PYEOF'
+        ELAPSED=$(python3 - "$LOAD_SCRIPT" "$INTENSITY" "$DURATION" "$CORES" <<'PYEOF'
 import subprocess, time, sys
 
-load_script, iterations, workers, cores = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+load_script, intensity, duration, cores = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 start = time.perf_counter()
 subprocess.run(
-    ["taskset", "-c", cores, "bash", load_script, iterations, workers],
+    ["taskset", "-c", cores, "bash", load_script, intensity, duration],
     stdout=subprocess.DEVNULL,
     stderr=subprocess.DEVNULL,
     check=True
@@ -155,13 +155,13 @@ print(f"{end - start:.4f}")
 PYEOF
 )
     else
-        ELAPSED=$(python3 - "$LOAD_SCRIPT" "$ITERATIONS" "$WORKERS" <<'PYEOF'
+        ELAPSED=$(python3 - "$LOAD_SCRIPT" "$INTENSITY" "$DURATION" <<'PYEOF'
 import subprocess, time, sys
 
-load_script, iterations, workers = sys.argv[1], sys.argv[2], sys.argv[3]
+load_script, intensity, duration = sys.argv[1], sys.argv[2], sys.argv[3]
 start = time.perf_counter()
 subprocess.run(
-    ["bash", load_script, iterations, workers],
+    ["bash", load_script, intensity, duration],
     stdout=subprocess.DEVNULL,
     stderr=subprocess.DEVNULL,
     check=True
@@ -186,7 +186,7 @@ print(f'{util:.1f}')
     sleep 2
 done
 
-# ── Summary statistics ────────────────────────────────────────
+# ── Summary stats ────────────────────────────────────────────
 python3 - "$RAW" "$SUMMARY" <<'PYEOF'
 import sys, statistics
 

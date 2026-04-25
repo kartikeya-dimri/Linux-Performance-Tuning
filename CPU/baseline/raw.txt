@@ -1,0 +1,4 @@
+# CPU Measurement — 2026-04-25 17:19:00
+# intensity=30000  duration=1s  runs=5
+# run_id | elapsed_s | cpu_avg_%
+1 | 228.5114 | 97.5

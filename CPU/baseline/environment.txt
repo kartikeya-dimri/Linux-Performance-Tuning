@@ -1,0 +1,22 @@
+# Environment Snapshot — 2026-04-25 17:19:00
+
+[kernel]
+7.0.0-14-generic
+
+[cpu_model]
+Intel(R) Core(TM) Ultra 5 125H
+
+[cpu_count]
+18
+
+[cpu_governor]
+powersave
+
+[load_avg_before]
+ 107.55, 107.80, 70.93
+
+[swappiness]
+60
+
+[run_params]
+runs=5  intensity=30000  duration=1s
