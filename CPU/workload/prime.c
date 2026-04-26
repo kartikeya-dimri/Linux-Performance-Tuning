@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define UPPER_LIMIT 5000000UL   /* tune if runtime too short/long */
+#define UPPER_LIMIT 25000000UL 
 
 typedef struct {
     int    thread_id;
