@@ -1,0 +1,20 @@
+=== Environment Snapshot ===
+Date         : Sun 26 Apr 2026 08:43:02 PM IST
+Kernel       : 7.0.0-14-generic
+CPU          : Intel(R) Core(TM) Ultra 5 125H
+Total cores  : 18
+CORE_A       : cpu7 — 4500000 kHz max
+CORE_B       : cpu5 — 4500000 kHz max
+Governor     : powersave
+RT throttle  : 950000
+perf_paranoid: 1
+Runs         : 10
+Threads      : 2
+UPPER_LIMIT  : 25000000
+
+--- Experiment Design ---
+SA : single process, cpu7+cpu5, powersave  → clean baseline
+SB : TWO processes, BOTH on cpu7 only, powersave   → manufactured worst case
+C1 : TWO processes, split cpu7+cpu5, powersave → affinity only
+C2 : TWO processes, split cpu7+cpu5, performance → affinity + governor
+============================
