@@ -54,16 +54,14 @@ echo "[STEP 4/7] Features saved to run_before/mem_features_full.json"
 echo ""
 
 # ============================================================
-# STEP 5 — Tuning recommendation
+# STEP 5 — Tuning recommendation + automatic apply
 # ============================================================
-echo "[STEP 5/7] Generating tuning recommendation..."
+echo "[STEP 5/7] Computing tuning recommendation and applying automatically..."
 echo ""
-echo "run_before/mem_features_full.json" | python3 mem_tuning.py
+python3 mem_tuning.py --apply run_before/mem_features_full.json
 echo ""
-echo "------------------------------------------------------------"
-echo "  Apply the commands printed above, then press ENTER."
-echo "------------------------------------------------------------"
-read
+echo "[STEP 5/7] Tuning applied. Proceeding to tuned run..."
+echo ""
 
 # ============================================================
 # STEP 6 — Reset + run tuned workload

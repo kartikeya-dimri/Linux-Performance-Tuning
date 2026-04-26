@@ -2,8 +2,24 @@
 
 import json
 import sys
+import subprocess
 
-FEATURE_FILE = input("Enter feature JSON path: ").strip()
+# -----------------------------------------
+# Usage:
+#   echo "path/to/mem_features_full.json" | python3 mem_tuning.py
+#   python3 mem_tuning.py --apply path/to/mem_features_full.json
+#
+# Without --apply  → prints commands only (dry run)
+# With    --apply  → prints AND executes each command automatically
+# -----------------------------------------
+
+APPLY_MODE = "--apply" in sys.argv
+
+if APPLY_MODE:
+    # Path passed as last argument
+    FEATURE_FILE = sys.argv[-1]
+else:
+    FEATURE_FILE = input("Enter feature JSON path: ").strip()
 
 with open(FEATURE_FILE) as f:
     features = json.load(f)
@@ -24,11 +40,10 @@ avg_free_mb  = features.get("avg_free_mb", 9999)
 swap_used_mb = features.get("avg_swap_used_mb", 0)
 
 # -----------------------------------------
-# Workload detection (analogous to disk's write_ratio / req_size logic)
-#
-# swap-heavy  → lots of si+so activity     → like "sequential" in disk
-# fault-heavy → lots of major page faults  → like "random" in disk
-# mixed       → both                       → like "mix" in disk
+# Workload detection
+# swap-heavy  → lots of si+so activity
+# fault-heavy → lots of major page faults
+# mixed       → both
 # -----------------------------------------
 swap_activity = avg_si + avg_so
 
@@ -45,14 +60,11 @@ else:
     workload = "mix"
     reasons.append("Moderate memory pressure — treating as mixed")
 
-print(f"Detected Workload Type: {workload}")
-print(f"Reason: {reasons[0]}")
+print(f"Detected Workload Type : {workload}")
+print(f"Reason                 : {reasons[0]}")
 
 # -----------------------------------------
 # vm.swappiness
-# Lower = keep anon pages in RAM longer
-# All workloads benefit from lower swappiness
-# unless the system truly has no RAM pressure
 # -----------------------------------------
 if avg_free_mb < 200 or swap_used_mb > 512:
     swappiness = 10
@@ -65,8 +77,6 @@ commands.append(f"sudo sysctl -w vm.swappiness={swappiness}")
 
 # -----------------------------------------
 # vm.dirty_ratio / vm.dirty_background_ratio
-# swap-heavy → allow more buffering to reduce flush-induced eviction
-# fault-heavy → more moderate buffering
 # -----------------------------------------
 if workload == "swap-heavy":
     dirty_ratio = 20
@@ -76,7 +86,7 @@ elif workload == "fault-heavy":
     dirty_ratio = 15
     dirty_bg    = 5
     reasons.append("Fault-heavy → moderate dirty ratio to balance cache residency")
-else:  # mix
+else:
     dirty_ratio = 20
     dirty_bg    = 10
     reasons.append("Mixed → larger dirty buffers as a safe compromise")
@@ -86,9 +96,6 @@ commands.append(f"sudo sysctl -w vm.dirty_background_ratio={dirty_bg}")
 
 # -----------------------------------------
 # Transparent Huge Pages (THP)
-# alloc/swap-heavy: 'always' → reduce TLB misses on large anon allocations
-# fault-heavy: 'madvise' → avoid compaction overhead for sparse access
-# mix: 'madvise' → safe compromise
 # -----------------------------------------
 if workload == "swap-heavy":
     thp = "always"
@@ -100,17 +107,31 @@ else:
 commands.append(f"echo {thp} | sudo tee /sys/kernel/mm/transparent_hugepage/enabled")
 
 # -----------------------------------------
-# Output
+# Summary
 # -----------------------------------------
-print(f"\nSwappiness    : {swappiness}")
+print(f"\nswappiness    : {swappiness}")
 print(f"dirty_ratio   : {dirty_ratio}")
 print(f"dirty_bg_ratio: {dirty_bg}")
 print(f"THP           : {thp}")
 
-print("\n--- Commands to Apply ---")
-for cmd in commands:
-    print(cmd)
+# -----------------------------------------
+# Apply or print commands
+# -----------------------------------------
+if APPLY_MODE:
+    print("\n--- Applying Tuning Commands Automatically ---")
+    for cmd in commands:
+        print(f"\n  [APPLY] {cmd}")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"          ✓ Done")
+        else:
+            print(f"          ✗ FAILED: {result.stderr.strip()}")
+    print("\n--- Tuning Applied ---")
+else:
+    print("\n--- Commands to Apply ---")
+    for cmd in commands:
+        print(f"  {cmd}")
 
 print("\n--- Reasons ---")
 for r in reasons:
-    print("-", r)
+    print(f"  - {r}")

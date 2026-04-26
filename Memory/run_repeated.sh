@@ -32,20 +32,10 @@ for i in $(seq 1 $ITERATIONS); do
     ./run_monitoring.sh $WORKLOAD run_before_$i
     echo run_before_$i | python3 mem_features_full.py
 
-    # --- TUNING (only compute once, apply every time) ---
-    if [ "$i" -eq 1 ]; then
-        echo ""
-        echo "===== TUNING ====="
-        echo "run_before_1/mem_features_full.json" | python3 mem_tuning.py
-
-        echo ""
-        echo "Apply tuning manually and press ENTER to continue with tuned runs."
-        read
-    else
-        echo ""
-        echo "===== TUNING ====="
-        echo "Assuming tuning was already applied in Iteration 1."
-    fi
+    # --- TUNING: auto-apply every iteration ---
+    echo ""
+    echo "===== TUNING (auto-applying) ====="
+    python3 mem_tuning.py --apply run_before_${i}/mem_features_full.json
 
     # --- TUNED RUN ---
     echo "===== TUNED RUN ====="
