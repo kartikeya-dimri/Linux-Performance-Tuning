@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
-# common.sh — Shared config and helpers
-# Sourced by all run_*.sh scripts. Never run directly.
+# common.sh — Shared config and helpers (redesigned for scheduler pressure)
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 WORKLOAD="$PROJECT_DIR/workload/prime"
 RAW="$PROJECT_DIR/results/raw"
 DOCS="$PROJECT_DIR/docs"
 
-# ── Experiment config ─────────────────────────────────────────────────────────
-RUNS=10         # runs per state
-THREADS=2       # threads per prime instance
-WAIT=3          # seconds cooldown between runs
-CORE_A=7        # primary P-core (both processes here in SB)
-CORE_B=5        # secondary P-core (used in split states C1, C2)
+# ── Experiment parameters ─────────────────────────────────────
+RUNS=10          # iterations per condition
+PROCS=6          # competing processes (creates heavy scheduler pressure)
+WAIT=5           # cooldown seconds between runs
 
-# ── Preflight checks ──────────────────────────────────────────────────────────
+# ── Core layout ───────────────────────────────────────────────
+# SB: all PROCS crammed onto ONE core  → maximum contention
+# C1: PROCS spread across TWO cores   → affinity relief
+# C2: same as C1 + chrt real-time     → scheduler tuning
+CORE_SB="7"         # single core for baseline contention
+CORES_C1="5,7"      # two cores for affinity split
+CORES_C2="5,7"      # two cores + real-time scheduling
+
+# ── Preflight checks ─────────────────────────────────────────
 preflight() {
     if [[ ! -x "$WORKLOAD" ]]; then
         echo "[ERROR] Binary missing: $WORKLOAD"
@@ -24,78 +28,70 @@ preflight() {
         exit 1
     fi
     if ! command -v perf &>/dev/null; then
-        echo "[ERROR] perf not found."
-        echo "        sudo apt install linux-tools-common linux-tools-generic linux-tools-\$(uname -r)"
+        echo "[ERROR] perf not found. Install linux-tools."
         exit 1
     fi
-    # Check perf works (paranoid setting)
-    if ! perf stat -e cpu-migrations -- true 2>/dev/null; then
-        echo "[ERROR] perf blocked. Fix with:"
-        echo "        sudo sysctl -w kernel.perf_event_paranoid=1"
+    if ! command -v chrt &>/dev/null; then
+        echo "[ERROR] chrt not found. Install util-linux."
         exit 1
     fi
     mkdir -p "$RAW" "$DOCS"
 }
 
-# ── Governor control ──────────────────────────────────────────────────────────
-set_governor() {
-    local gov="$1"
-    echo "[env] Setting governor: $gov ..."
-    sudo cpupower frequency-set -g "$gov" 2>/dev/null \
-        && echo "[env] Governor set: $gov" \
-        || echo "[WARN] cpupower failed — governor may not have changed"
-    # Verify
-    local actual
-    actual=$(cat /sys/devices/system/cpu/cpu${CORE_A}/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
-    echo "[env] Verified governor on cpu${CORE_A}: $actual"
-    if [[ "$actual" != "$gov" ]]; then
-        echo "[ERROR] Governor did not switch to $gov — got $actual. Aborting."
-        exit 1
-    fi
-}
-
-current_governor() {
-    cat /sys/devices/system/cpu/cpu${CORE_A}/cpufreq/scaling_governor 2>/dev/null || echo "unknown"
-}
-
-# ── Core measurement ──────────────────────────────────────────────────────────
-# Runs a single foreground process with optional background contention process
-# Usage: measure_run CSV RUN TOTAL BG_CORE FG_CORE
-#   BG_CORE="" means no background process (SA case)
-#   BG_CORE=N  means launch background process on core N first
+# ── Single measurement ────────────────────────────────────────
+# Usage: measure_run <csv> <run> <total> <fg_cores> <bg_cores> <mode>
+#   mode: "normal" | "realtime"
+#   bg_cores: cores for background workers (same as fg_cores for SB)
+#
+# Launches (PROCS-1) background workers, then measures one foreground process.
+# Reports: wall_sec, context_switches of the foreground process only.
 measure_run() {
-    local csv="$1" run="$2" total="$3" bg_core="$4" fg_core="$5"
+    local csv="$1" run="$2" total="$3" fg_cores="$4" bg_cores="$5" mode="$6"
 
     echo -n "  Run $run/$total ... "
 
-    local tmp_time; tmp_time=$(mktemp)
-    local tmp_perf; tmp_perf=$(mktemp)
+    local tmp_time tmp_perf
+    tmp_time=$(mktemp)
+    tmp_perf=$(mktemp)
 
-    # Launch background contention process if requested
-    local BG_PID=""
-    if [[ -n "$bg_core" ]]; then
-        taskset -c "$bg_core" "$WORKLOAD" "$THREADS" &>/dev/null &
-        BG_PID=$!
-    fi
+    # ── Launch background workers ────────────────────────────
+    local BG_PIDS=()
+    for ((p=1; p<PROCS; p++)); do
+        if [[ "$mode" == "realtime" ]]; then
+            taskset -c "$bg_cores" chrt -r 98 "$WORKLOAD" 1 &>/dev/null &
+        else
+            taskset -c "$bg_cores" "$WORKLOAD" 1 &>/dev/null &
+        fi
+        BG_PIDS+=($!)
+    done
 
-    # Measure foreground process
-    /usr/bin/time -f "%e" -o "$tmp_time" \
-        perf stat -e cpu-migrations -o "$tmp_perf" -- \
-        taskset -c "$fg_core" "$WORKLOAD" "$THREADS" \
+    # ── Measure foreground process ───────────────────────────
+    if [[ "$mode" == "realtime" ]]; then
+        /usr/bin/time -f "%e" -o "$tmp_time" \
+        perf stat -e context-switches -o "$tmp_perf" -- \
+        taskset -c "$fg_cores" chrt -r 99 "$WORKLOAD" 1 \
         2>/dev/null
-
-    # Wait for background to finish if it was launched
-    if [[ -n "$BG_PID" ]]; then
-        wait "$BG_PID" 2>/dev/null || true
+    else
+        /usr/bin/time -f "%e" -o "$tmp_time" \
+        perf stat -e context-switches -o "$tmp_perf" -- \
+        taskset -c "$fg_cores" "$WORKLOAD" 1 \
+        2>/dev/null
     fi
 
-    local wall mig
+    # ── Reap background workers ──────────────────────────────
+    for pid in "${BG_PIDS[@]}"; do
+        wait "$pid" 2>/dev/null || true
+    done
+
+    # ── Parse results ────────────────────────────────────────
+    local wall cs
     wall=$(cat "$tmp_time")
-    mig=$(grep -E 'cpu-migrations' "$tmp_perf" \
-          | awk '{gsub(/,/,"",$1); print $1}')
-    mig=${mig:-0}
+    cs=$(grep -E 'context-switches' "$tmp_perf" \
+         | awk '{gsub(/,/,"",$1); print $1}')
+    cs=${cs:-0}
+
     rm -f "$tmp_time" "$tmp_perf"
 
-    echo "wall=${wall}s  migrations=${mig}"
-    echo "${run},${wall},${mig}" >> "$csv"
+    echo "wall=${wall}s  ctx=${cs}"
+    echo "${run},${wall},${cs}" >> "$csv"
 }
