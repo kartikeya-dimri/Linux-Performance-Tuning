@@ -1,6 +1,6 @@
 # CPU Performance Tuning — Linux Scheduler & Affinity Experiment
 
-> **Course:** Linux Performance Tuning (Sem 6)  
+> **Course:** Linux Performance Tuning (Sem 6)
 > **Objective:** Demonstrate two independent, measurable CPU performance improvements under controlled stress conditions using CPU affinity and real-time scheduler tuning.
 
 ---
@@ -26,21 +26,21 @@
 ```
 CPU_Tuning/
 ├── workload/
-│   ├── prime.c          # CPU-bound stressor (deterministic prime sieve)
-│   ├── prime            # compiled binary (after build)
-│   └── build.sh         # compile script
+│   ├── prime.c             # CPU-bound stressor (deterministic prime counter)
+│   ├── prime               # compiled binary (after build)
+│   └── build.sh            # compile script
 ├── scripts/
-│   ├── common.sh        # shared config + measure_run() helper
-│   ├── detect_pcores.sh # auto-detect P-cores on hybrid Intel CPUs
-│   ├── run_baselines.sh # collect SB (contention baseline)
-│   ├── run_experiments.sh # collect C1 (affinity) and C2 (scheduler)
-│   └── analyze.sh       # stats, plots, final report
+│   ├── common.sh           # shared config + measure_run() helper
+│   ├── detect_pcores.sh    # auto-detect P-cores on hybrid Intel CPUs
+│   ├── run_baselines.sh    # collect SB (contention baseline)
+│   ├── run_experiments.sh  # collect C1 (affinity) and C2 (scheduler)
+│   └── analyze.sh          # stats, plots, final report
 ├── results/
-│   ├── raw/             # SB.csv, C1.csv, C2.csv
-│   └── plots/           # 6 PNG plots
+│   ├── raw/                # SB.csv, C1.csv, C2.csv
+│   └── plots/              # 6 PNG plots
 └── docs/
-    ├── environment.txt  # system snapshot at time of run
-    └── final_report.txt # generated stats report
+    ├── environment.txt     # system snapshot at time of run
+    └── final_report.txt    # generated stats report
 ```
 
 ---
@@ -52,17 +52,18 @@ CPU_Tuning/
 On a modern Linux system, multiple processes competing for the same CPU core cause two distinct performance penalties:
 
 1. **Core contention** — the OS must time-share the core across all runnable processes, so each one gets only a fraction of the available compute time.
-2. **Scheduler preemption** — the OS involuntarily interrupts a running process (context switch) to give another process CPU time. Each context switch wastes cycles saving/restoring state and pollutes CPU caches.
+2. **Scheduler preemption** — the OS involuntarily interrupts a running process (context switch) to give another process CPU time. Each context switch wastes cycles saving and restoring state and pollutes CPU caches.
 
 These are **two orthogonal problems** requiring different fixes:
+
 - Core contention → fix with **CPU affinity** (hardware-level tuning)
 - Scheduler preemption → fix with **scheduling policy** (OS-level tuning)
 
-This experiment isolates and demonstrates both effects independently, with statistical validation.
+This experiment isolates and demonstrates both effects independently, with statistical validation. The key insight — and the main finding — is that fixing one does not fix the other. They must be addressed separately.
 
 ### Why the First Design Failed
 
-An earlier version of this experiment used only 2 processes. With 2 processes on 2 cores, context switch counts were near-zero (single digits per run), so scheduler tuning showed no measurable impact. The fix: increase to **6 competing processes on constrained cores**, which forces the scheduler into aggressive time-sharing and generates thousands of context switches in the baseline — giving scheduler tuning something meaningful to improve.
+An earlier version of this experiment used only 2 processes. With 2 processes on 2 cores, context switch counts were near-zero (single digits per run), so scheduler tuning had nothing meaningful to improve. The fix: increase to **6 competing processes on constrained cores**, which forces the scheduler into aggressive time-sharing and generates thousands of context switches in the baseline — giving scheduler tuning something measurable to demonstrate.
 
 ---
 
@@ -74,7 +75,7 @@ Each process independently counts all prime numbers up to 25,000,000 using trial
 
 **Why this workload:**
 - **Purely CPU-bound** — no I/O, no sleep, no syscalls during computation
-- **Deterministic** — same input always produces the same runtime (±noise from scheduling)
+- **Deterministic** — same input always produces the same runtime (±noise from scheduling only)
 - **Scalable** — can run N independent instances to create N-way contention
 - **Self-timing** — reports wall time via `CLOCK_MONOTONIC`
 
@@ -102,7 +103,7 @@ static void *compute_primes(void *arg) {
 |---|---|---|
 | Processes per run | 6 | Creates heavy scheduler pressure (forces thousands of ctx switches) |
 | Cores available | 2 (cpu5, cpu7) | Constrained resource pool; 6 processes on 2 cores = 3× oversubscription |
-| Runs per condition | 10 | Enough for Welch's t-test; balances time vs statistical power |
+| Runs per condition | 10 | Sufficient for Welch's t-test; balances time vs statistical power |
 | Cooldown between runs | 5s | Lets CPU thermal state and scheduler state settle |
 | Metric 1 | Wall time (seconds) | Primary: total execution time of the measured foreground process |
 | Metric 2 | Context switches | Secondary: involuntary preemptions measured by `perf stat` |
@@ -119,9 +120,9 @@ cpu5: (idle)
 ```
 
 - The OS must round-robin 6 processes on 1 core
-- Each process gets ~1/6 of the available CPU time
+- Each process gets ~1/6 of available CPU time
 - Context switches are in the **thousands** per run
-- This is the controlled worst-case, not a normal workload
+- This is a controlled worst-case, not a typical production workload
 
 #### C1 — CPU Affinity Tuning
 
@@ -132,10 +133,11 @@ cpu7: [P1] [P2] [P3]   ← 3 processes
 cpu5: [P4] [P5] [P6]   ← 3 processes
 ```
 
-- Each process still shares a core with 2 others, but only fights 2 competitors instead of 5
-- The OS context-switches less (fewer competing processes per core)
-- Expected: **execution time ↓ ~50%**, context switches ↓ moderately
-- Only change from SB: **core assignment** — same processes, same workload, same scheduler
+- Each process still shares a core with 2 others, but only competes with 2 instead of 5
+- Expected: **execution time ↓ ~50%**, context switches minimally affected
+- Only change from SB: **core assignment** — same processes, same workload, same scheduler policy
+
+> **Note:** Affinity solves the resource problem, not the preemption problem. `SCHED_OTHER` still round-robins fairly across all processes on each core. With 3 processes per core instead of 6, context switches drop only marginally — this is expected and confirmed by the data.
 
 #### C2 — Affinity + Real-Time Scheduler Tuning
 
@@ -145,19 +147,21 @@ Same 2-core spread as C1, but the foreground (measured) process runs under `SCHE
 cpu7/cpu5: [P1(RR-99)] vs [P2(RR-98)] [P3(RR-98)] ...
 ```
 
-- `SCHED_RR` (Round-Robin real-time) is a **higher scheduling class** than `SCHED_OTHER` (the normal Linux scheduler)
-- Real-time processes **preempt** normal processes immediately and are only preempted by equal/higher real-time processes
-- Since background workers run at RR-98 (one step below the foreground), the foreground process is almost never involuntarily preempted
+- `SCHED_RR` (Round-Robin real-time) is a **higher scheduling class** than `SCHED_OTHER`
+- A `SCHED_RR` process at priority 99 preempts all lower-priority processes immediately
+- It only yields when its time quantum expires **and** another equal-priority RR process is waiting, or when it blocks on I/O — which never happens in this CPU-bound workload
+- Background workers at RR-98 can preempt each other, but **not** the priority-99 foreground
 - Expected: **context switches ↓ dramatically**, execution time ↓ further
 - Only change from C1: **scheduling policy** — same cores, same processes, same workload
 
 ### Measurement Method
 
 For each run, `measure_run()` in `common.sh`:
+
 1. Launches `PROCS-1` (5) background workers in the background
 2. Runs 1 foreground process wrapped in `perf stat -e context-switches` and `/usr/bin/time -f "%e"`
-3. Waits for background workers to finish
-4. Parses wall time and context switch count
+3. Waits for all background workers to finish
+4. Parses wall time and context switch count from their respective outputs
 5. Appends `run,wall_sec,context_switches` to the condition's CSV
 
 ```bash
@@ -185,16 +189,13 @@ CORES_C2="5,7"   # C2: same spread + real-time scheduling
 
 ### `run_baselines.sh` — Collect SB
 
-Runs `RUNS` iterations of: 5 background workers + 1 measured foreground, all on `cpu7`.
+Runs `RUNS` iterations of: 5 background workers + 1 measured foreground, all pinned to `cpu7`.
 
 ### `run_experiments.sh` — Collect C1 and C2
 
-**C1:** Same multi-process launch, spread across `cpu5,7`, `SCHED_OTHER` (normal).
-
-**C2:** Same as C1, but:
-- Foreground: `chrt -r 99` (SCHED_RR, priority 99)
-- Background workers: `chrt -r 98` (SCHED_RR, priority 98)
-- Requires `sudo` or `CAP_SYS_NICE` capability
+- **C1:** same structure, processes spread across `cpu5,7`, normal `SCHED_OTHER`
+- **C2:** same structure, processes on `cpu5,7`, foreground at `chrt -r 99`, background at `chrt -r 98`
+- Requires `sudo` or `CAP_SYS_NICE` for `SCHED_RR`
 
 ### `analyze.sh` — Statistics and Plots
 
@@ -283,7 +284,7 @@ bash scripts/analyze.sh
 |---|---|---|---|---|---|
 | SB vs C1 | Wall time | 68.34 | < 0.001 | 30.56 | ✓ YES |
 | C1 vs C2 | Wall time | 33.69 | < 0.001 | 15.07 | ✓ YES |
-| SB vs C1 | Ctx switches | 3.49 | 0.006 | 1.56 | ✓ YES |
+| SB vs C1 | Ctx switches | 3.49 | 0.006 | 1.56 | ✓ YES (small practical effect) |
 | C1 vs C2 | Ctx switches | 350.22 | < 0.001 | 156.62 | ✓ YES |
 
 ---
@@ -292,41 +293,44 @@ bash scripts/analyze.sh
 
 ### SB → C1: Affinity Tuning (Hardware-Level)
 
-Spreading 6 processes from 1 core to 2 cores cut execution time by **49%** — essentially halving it, exactly as the resource model predicts. When all 6 processes share 1 core, each gets ~1/6 of the available compute time. With 2 cores, each gets ~1/3. The measured process finishes twice as fast.
+Spreading 6 processes from 1 core to 2 cores cut execution time by **49%** — essentially halving it, exactly as the resource model predicts. When all 6 processes share 1 core, each gets ~1/6 of the available compute time. With 2 cores, each gets ~1/3. The measured process finishes roughly twice as fast.
 
-Context switches dropped only **0.9%** (2470 → 2449). This is expected: `SCHED_OTHER` still round-robins fairly across all processes on each core, so even with 3 processes per core instead of 6, there is still frequent preemption. Affinity solves the **resource** problem, not the **preemption** problem.
+Context switches dropped only **0.9%** (2470 → 2449). This is statistically significant (p = 0.006) but practically negligible — a difference of 21 switches out of 2470. This is the correct and expected result: `SCHED_OTHER` still round-robins fairly across all processes on each core. With 3 processes per core instead of 6, there is marginally less scheduling activity, but the preemption behaviour is fundamentally unchanged.
 
-**What affinity does:** Gives each process more CPU time by reducing how many competitors it shares a core with. It does not change how the scheduler behaves toward each process.
+**What affinity does:** Gives each process more CPU time by reducing how many competitors it shares a core with. It does not change how the scheduler treats each individual process.
+
+**What affinity does not do:** Reduce context switches in any meaningful way. That requires a different tool entirely.
 
 ### C1 → C2: Scheduler Tuning (OS-Level)
 
 Promoting the foreground process to `SCHED_RR` (priority 99) caused context switches to drop **99%** (2449 → 24) and execution time to drop a further **62%** (22.3s → 8.5s).
 
 `SCHED_RR` belongs to the **real-time scheduling class**, which is fundamentally different from `SCHED_OTHER`:
-- A `SCHED_RR` process at priority 99 **preempts** all `SCHED_OTHER` processes immediately
-- It only yields when: (a) its time quantum expires and another equal-priority RR process is waiting, or (b) it blocks on I/O (which never happens in our CPU-bound workload)
+
+- A `SCHED_RR` process at priority 99 preempts all `SCHED_OTHER` processes immediately
+- It only yields when its time quantum expires and another equal-priority RR process is waiting, or when it blocks on I/O — neither of which applies to this workload
 - Background workers at priority 98 can preempt each other, but **not** the priority-99 foreground process
 
-The result: the foreground process runs almost uninterrupted (only 24 context switches vs 2449), which both explains the near-zero context switch count and the dramatic speed improvement.
+The result: the foreground process runs almost uninterrupted — only 24 context switches across the entire run, versus 2449 in C1.
 
-**The time improvement is larger than context switch reduction alone would predict.** This is because with `SCHED_RR`, the foreground process also **monopolises** its core — it does not yield to the priority-98 background workers at all (only to other priority-99 processes, of which there are none). So the time improvement comes from two combined effects: fewer context switches and higher CPU monopolisation.
+**Why execution time drops more than context switch reduction alone would predict:** With `SCHED_RR` at priority 99, the foreground process also monopolises its core — it does not yield to the priority-98 background workers. The time improvement comes from two combined effects: fewer involuntary context switches, and higher effective CPU time capture. Both are direct consequences of `SCHED_RR` semantics and are expected behaviours, not anomalies.
 
 ### The Two Dimensions Are Independent
 
 This is the core finding of the experiment:
 
 ```
-                    Context Switches    Execution Time
+                     Context Switches    Execution Time
 SB  (1 core, normal)    HIGH                SLOW
-C1  (2 cores, normal)   HIGH                FASTER    ← affinity fixes time, not ctx
+C1  (2 cores, normal)   HIGH (unchanged)    FASTER    ← affinity fixes time, not ctx
 C2  (2 cores, realtime) LOW                 FASTEST   ← scheduler fixes ctx (and time)
 ```
 
-**CPU affinity** solves the hardware resource problem: more cores = more parallel compute = less waiting.
+CPU affinity solves the hardware resource problem: more cores = more parallel compute = less waiting.
 
-**Scheduler policy** solves the preemption problem: higher scheduling class = fewer involuntary interruptions = smoother, faster execution.
+Scheduler policy solves the preemption problem: higher scheduling class = fewer involuntary interruptions = smoother, faster execution.
 
-A system suffering from both problems benefits from both fixes. They are not alternatives — they are complementary.
+A system suffering from both problems benefits from both fixes. They are not alternatives — they are complementary and target different layers of the Linux performance stack.
 
 ---
 
@@ -335,57 +339,64 @@ A system suffering from both problems benefits from both fixes. They are not alt
 ### Why Welch's t-test (not Student's t-test)?
 
 Welch's t-test does not assume equal variance between groups. Inspecting the SDs confirms this was the right choice:
-- SB wall time SD = 0.018s (extremely consistent — fully saturated core has no randomness)
-- C1 wall time SD = 0.992s (more variable — contention on 2 cores has more OS scheduling noise)
 
-Equal-variance t-test would be incorrect here.
+- SB wall time SD = **0.018s** — extremely consistent; a fully saturated single core produces clockwork-like scheduling
+- C1 wall time SD = **0.992s** — more variable; contention across 2 cores introduces OS scheduling noise
+- C2 wall time SD = **0.838s** — also variable; SCHED_RR priority inheritance can have minor run-to-run fluctuation
 
-### Why Cohen's d matters
+Using an equal-variance t-test here would be statistically incorrect.
 
-p-values only tell you whether an effect is real; they don't tell you how large it is. With 10 runs each, even tiny differences can be significant. Cohen's d normalises the effect size:
+### Why Cohen's d Matters
+
+p-values only tell you whether an effect is real. With 10 runs each, even small differences can clear p < 0.05. Cohen's d normalises the effect size relative to the spread of the data, giving a measure of practical significance:
 
 | d value | Interpretation |
 |---|---|
 | 0.2 | Small |
 | 0.5 | Medium |
 | 0.8 | Large |
-| > 2 | Very large |
+| > 2.0 | Very large |
 
-Our smallest effect (SB vs C1 context switches, d = 1.56) is still nearly twice the "large" threshold. The largest (C1 vs C2 context switches, d = 156.62) indicates the two distributions have essentially zero overlap — a definitive result.
+**On the extreme d values:** The execution time comparisons produce d values of 30.56 and 15.07 — far beyond the "very large" threshold. This is primarily because SB's SD is only 0.018s (a near-perfectly deterministic baseline). When the denominator of Cohen's d is this small, d scales up mathematically. The values are not fabricated — they reflect genuinely non-overlapping distributions — but they should be read as "the conditions are completely separated" rather than taken as literal magnitudes.
+
+**The most informative result** is SB vs C1 context switches (d = 1.56, p = 0.006). This is statistically significant but practically small (2470 → 2449). This is not a failure — it is a **finding**: it proves that CPU affinity alone does not meaningfully reduce context switches. Only scheduler-class promotion achieves that, as shown by C1 vs C2 (d = 156.62).
 
 ### Distribution Plots
 
-The 6 generated plots show:
-- **Bar charts** (mean ± SE): quick visual comparison of central tendency
-- **Box plots** (IQR + whiskers): show spread, median, and outliers
-- **KDE density curves**: show full shape of each distribution — confirm normality and separation
+Six plots are generated to characterise each condition's behaviour:
 
-For C1 vs C2 context switches, the KDE curves do not overlap at all — C1 is centred around 2449 and C2 around 24. This is visually striking and supports the statistical result.
+- **Bar charts** (mean ± SE): quick visual comparison of central tendency across conditions
+- **Box plots** (IQR + whiskers): show spread, median, and outliers; execution time uses log scale to make all three distributions visible simultaneously
+- **KDE density curves**: show the full shape of each distribution, confirm separation, and reveal multimodality (C1's bimodal KDE reflects two possible scheduling states across 2 cores)
+
+For C1 vs C2 context switches, the KDE curves have zero overlap — C1 clusters around 2449 and C2 around 24. This is visually unambiguous and matches the statistical result.
 
 ---
 
 ## Key Takeaways
 
-1. **CPU affinity is a hardware-level fix.** Pinning processes to separate cores eliminates forced time-sharing and directly reduces execution time proportional to the reduction in competition.
+1. **CPU affinity is a hardware-level fix.** Pinning processes to separate cores eliminates forced time-sharing and directly reduces execution time proportional to the reduction in competition. It does not change scheduler behaviour.
 
-2. **Scheduler tuning is an OS-level fix.** `SCHED_RR` (real-time) eliminates involuntary preemption of the measured process, collapsing context switches by 99% and further improving execution time.
+2. **Scheduler tuning is an OS-level fix.** `SCHED_RR` eliminates involuntary preemption of the measured process, collapsing context switches by 99% and further improving execution time. It does not compensate for inadequate core resources.
 
-3. **The two tunings are orthogonal.** Affinity does not reduce context switches. Scheduler tuning does not replace the need for adequate cores. Both are needed for full optimisation.
+3. **The two tunings are orthogonal.** The data shows clearly: affinity does not reduce context switches (−0.9%), and scheduler tuning alone without affinity would not recover the execution time lost to core contention. Both fixes are needed for full optimisation.
 
-4. **Contention must be high enough for scheduler tuning to show.** With only 2 processes, context switch counts are near-zero and scheduler tuning has nothing to improve. The redesign (6 processes, constrained cores) was essential to making C2 measurable.
+4. **Contention must be high enough for scheduler tuning to show.** With only 2 processes, context switch counts are near-zero and scheduler tuning has nothing to improve. The redesign (6 processes, constrained cores) was essential to making the C2 improvement measurable.
 
-5. **Real-time scheduling (`SCHED_RR`) requires elevated privileges.** `chrt -r` requires `sudo` or `CAP_SYS_NICE`. `nice` is not a substitute — it only adjusts weight within `SCHED_OTHER`, not scheduling class.
+5. **Real-time scheduling (`SCHED_RR`) requires elevated privileges.** `chrt -r` requires `sudo` or `CAP_SYS_NICE`. `nice` is not a substitute — it only adjusts weight within `SCHED_OTHER`, not the scheduling class itself.
 
 ---
 
 ## Limitations & Honest Notes
 
-- **Results reflect controlled stress conditions.** 6 competing CPU-bound processes on 2 cores is an artificially hostile environment. In normal workloads, contention is lower and gains would be smaller.
+- **Results reflect controlled stress conditions.** Six competing CPU-bound processes on 2 cores is an artificially hostile environment. In normal workloads with lower contention, the absolute gains would be smaller, though the relative ordering of SB < C1 < C2 is expected to hold.
 
-- **C2's execution time improvement is partly from monopolisation.** With SCHED_RR at priority 99, the foreground process does not yield to background workers at all — so its speed gain is not purely from fewer context switches, but also from capturing more CPU time. This is real SCHED_RR behaviour, but worth being explicit about.
+- **C2's execution time improvement combines two effects.** With `SCHED_RR` at priority 99, the foreground process both avoids preemption by and monopolises CPU time from the background workers. These two effects are not separately quantified in this experiment. This is real `SCHED_RR` behaviour but worth being explicit about.
 
-- **`SCHED_RR` is not appropriate for general-purpose workloads.** Real-time scheduling can starve normal processes. It is useful for latency-sensitive applications (audio, robotics, HPC), not as a general performance trick.
+- **`SCHED_RR` is not a general-purpose optimisation.** Real-time scheduling can starve normal-priority processes. It is appropriate for latency-sensitive applications (audio servers, robotics, HPC batch jobs) — not as a routine performance trick in production systems.
 
-- **Single machine, single run session.** Results may vary across different CPU microarchitectures, kernel versions, or system load levels. The relative ordering of SB < C1 < C2 for execution time is expected to hold; absolute values will differ.
+- **Single machine, single run session.** Absolute values will differ across CPU microarchitectures, kernel versions, and background system load. The directional results are expected to generalise; the specific numbers are environment-specific.
 
-- **Context switches measured for foreground process only.** Background worker context switches are not reported — only the measured foreground process is instrumented by `perf stat`.
+- **Context switches measured for the foreground process only.** Background worker context switches are not reported — only the measured foreground process is instrumented by `perf stat`. This is intentional: the experiment measures the impact of tuning on the process of interest, not the system as a whole.
+
+- **n = 10 is a small sample.** It is sufficient for the large effects observed here but would not be adequate for detecting subtle differences. Results with d < 0.5 should be treated cautiously at this sample size.
