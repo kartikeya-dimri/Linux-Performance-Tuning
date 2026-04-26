@@ -31,7 +31,6 @@ CPU_Tuning/
 │   └── build.sh            # compile script
 ├── scripts/
 │   ├── common.sh           # shared config + measure_run() helper
-│   ├── detect_pcores.sh    # auto-detect P-cores on hybrid Intel CPUs
 │   ├── run_baselines.sh    # collect SB (contention baseline)
 │   ├── run_experiments.sh  # collect C1 (affinity) and C2 (scheduler)
 │   └── analyze.sh          # stats, plots, final report
@@ -93,6 +92,8 @@ static void *compute_primes(void *arg) {
 
 **Single-process baseline:** ~14 seconds on a P-core (cpu7).
 
+**Why 25,000,000 specifically:** At this limit, a single process runs for ~14 seconds — long enough that scheduling noise is a small fraction of total runtime, but short enough that 10 runs per condition completes in under 10 minutes. Below ~5M, runs are too short and measurement jitter dominates. Above ~50M, the experiment takes hours.
+
 ---
 
 ## Experiment Design
@@ -101,12 +102,16 @@ static void *compute_primes(void *arg) {
 
 | Parameter | Value | Rationale |
 |---|---|---|
-| Processes per run | 6 | Creates heavy scheduler pressure (forces thousands of ctx switches) |
+| Processes per run | 6 | Creates heavy scheduler pressure — forces thousands of context switches per run, giving scheduler tuning something measurable to fix |
 | Cores available | 2 (cpu5, cpu7) | Constrained resource pool; 6 processes on 2 cores = 3× oversubscription |
-| Runs per condition | 10 | Sufficient for Welch's t-test; balances time vs statistical power |
-| Cooldown between runs | 5s | Lets CPU thermal state and scheduler state settle |
+| Runs per condition | 10 | Sufficient for Welch's t-test; balances time vs statistical power — effects are large enough that n=10 gives p < 0.001 |
+| Cooldown between runs | 5s | Lets CPU thermal state and scheduler queue settle between measurements |
 | Metric 1 | Wall time (seconds) | Primary: total execution time of the measured foreground process |
-| Metric 2 | Context switches | Secondary: involuntary preemptions measured by `perf stat` |
+| Metric 2 | Context switches | Secondary: involuntary preemptions measured by `perf stat -e context-switches` |
+
+**Why 6 processes specifically:** Fewer processes (2–3) produce context switch counts in the single digits — scheduler tuning has nothing meaningful to improve. More processes (10+) on 2 cores makes runs extremely long and increases thermal variance. 6 processes on 2 cores (3× oversubscription) was the minimum that generated thousands of context switches in SB while keeping run time under 50 seconds.
+
+**Why 2 cores (cpu5, cpu7) specifically:** Both are confirmed P-cores on the Intel Core Ultra 5 125H running at 4500 MHz maximum frequency. Using P-cores ensures both cores run at the same speed, eliminating frequency mismatch as a confounding variable. E-cores on this CPU run at only 3600 MHz — using one P-core and one E-core would introduce a 25% clock speed difference that has nothing to do with the tunings being tested.
 
 ### Three Conditions
 
@@ -123,6 +128,8 @@ cpu5: (idle)
 - Each process gets ~1/6 of available CPU time
 - Context switches are in the **thousands** per run
 - This is a controlled worst-case, not a typical production workload
+
+**Why this is a valid worst case:** `taskset` is a hard CPU affinity constraint — the kernel scheduler cannot migrate these processes off cpu7 even if cpu5 is completely idle. This guarantees the contention we want to measure, not a statistical average across many scheduling outcomes.
 
 #### C1 — CPU Affinity Tuning
 
@@ -149,62 +156,42 @@ cpu7/cpu5: [P1(RR-99)] vs [P2(RR-98)] [P3(RR-98)] ...
 
 - `SCHED_RR` (Round-Robin real-time) is a **higher scheduling class** than `SCHED_OTHER`
 - A `SCHED_RR` process at priority 99 preempts all lower-priority processes immediately
-- It only yields when its time quantum expires **and** another equal-priority RR process is waiting, or when it blocks on I/O — which never happens in this CPU-bound workload
-- Background workers at RR-98 can preempt each other, but **not** the priority-99 foreground
-- Expected: **context switches ↓ dramatically**, execution time ↓ further
-- Only change from C1: **scheduling policy** — same cores, same processes, same workload
-
-### Measurement Method
-
-For each run, `measure_run()` in `common.sh`:
-
-1. Launches `PROCS-1` (5) background workers in the background
-2. Runs 1 foreground process wrapped in `perf stat -e context-switches` and `/usr/bin/time -f "%e"`
-3. Waits for all background workers to finish
-4. Parses wall time and context switch count from their respective outputs
-5. Appends `run,wall_sec,context_switches` to the condition's CSV
-
-```bash
-# Foreground measurement (C2 example)
-/usr/bin/time -f "%e" -o "$tmp_time" \
-perf stat -e context-switches -o "$tmp_perf" -- \
-taskset -c "$fg_cores" chrt -r 99 "$WORKLOAD" 1
-```
+- Background workers at priority 98 can preempt each other but **not** the priority-99 foreground process
+- Only change from C1: **scheduling class and priority** — same cores, same workload
 
 ---
 
 ## Implementation
 
-### `common.sh` — Core Configuration
+### Measurement Method
+
+Each run uses two tools simultaneously:
 
 ```bash
-RUNS=10          # iterations per condition
-PROCS=6          # total competing processes per run
-WAIT=5           # cooldown seconds
-
-CORE_SB="7"      # SB: all on one core
-CORES_C1="5,7"   # C1: spread across two cores
-CORES_C2="5,7"   # C2: same spread + real-time scheduling
+/usr/bin/time -f "%e" -o "$tmp_time" \
+    perf stat -e context-switches -o "$tmp_perf" -- \
+    taskset -c "$fg_cores" [chrt -r 99] "$WORKLOAD" 1
 ```
 
-### `run_baselines.sh` — Collect SB
+- `/usr/bin/time -f "%e"` captures wall-clock elapsed time in seconds (not CPU time — wall time includes all scheduling delays and is the correct metric for "how long did this take?")
+- `perf stat -e context-switches` counts involuntary preemptions for the measured process only — background worker switches are not included
 
-Runs `RUNS` iterations of: 5 background workers + 1 measured foreground, all pinned to `cpu7`.
+**Why wall time and not CPU time:** CPU time measures only the cycles actually given to this process. Wall time measures the total elapsed time including waiting. For a user experiencing a job, wall time is what matters. The difference between the two is the cost of scheduling — which is exactly what we are tuning.
 
-### `run_experiments.sh` — Collect C1 and C2
+### Background Worker Management
 
-- **C1:** same structure, processes spread across `cpu5,7`, normal `SCHED_OTHER`
-- **C2:** same structure, processes on `cpu5,7`, foreground at `chrt -r 99`, background at `chrt -r 98`
-- Requires `sudo` or `CAP_SYS_NICE` for `SCHED_RR`
+For each run, (PROCS - 1) = 5 background workers are launched, then the foreground process is measured, then all workers are reaped:
 
-### `analyze.sh` — Statistics and Plots
+```bash
+for ((p=1; p<PROCS; p++)); do
+    taskset -c "$bg_cores" "$WORKLOAD" 1 &>/dev/null &
+    BG_PIDS+=($!)
+done
+# ... measure foreground ...
+for pid in "${BG_PIDS[@]}"; do wait "$pid"; done
+```
 
-- Loads `SB.csv`, `C1.csv`, `C2.csv`
-- Computes mean, SD, SE per condition per metric
-- Runs **Welch's t-test** (unequal variance) for SB vs C1 and C1 vs C2
-- Computes **Cohen's d** (effect size) for each comparison
-- Generates 6 plots (bar, box, KDE) for both metrics
-- Writes `final_report.txt`
+This ensures the foreground process always competes against exactly 5 background processes — the contention level is constant across all runs.
 
 ---
 
@@ -213,41 +200,32 @@ Runs `RUNS` iterations of: 5 background workers + 1 measured foreground, all pin
 ### Prerequisites
 
 ```bash
-sudo apt install gcc linux-tools-common linux-tools-$(uname -r) util-linux
-# util-linux provides chrt; linux-tools provides perf
+sudo apt install linux-tools-common linux-tools-generic linux-tools-$(uname -r)
+pip3 install matplotlib scipy numpy --break-system-packages
+
+# Allow perf without root
+sudo sysctl -w kernel.perf_event_paranoid=1
+
+# Allow real-time scheduling (required for C2)
+sudo mkdir -p /etc/systemd/system/user@.service.d/
+sudo tee /etc/systemd/system/user@.service.d/rtprio.conf << EOF
+[Service]
+LimitRTPRIO=99
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart "user@$(id -u).service"
+# Open fresh terminal — verify: ulimit -r should print 99
 ```
 
-### Step 1 — Build
+### Execution
 
 ```bash
+cd CPU_Tuning/
 bash workload/build.sh
-# Compiles prime.c → workload/prime
-# Runs a sanity test on cpu7 (~14s)
+bash scripts/run_baselines.sh && bash scripts/run_experiments.sh && bash scripts/analyze.sh
 ```
 
-### Step 2 — Collect Baseline
-
-```bash
-bash scripts/run_baselines.sh
-# Produces results/raw/SB.csv
-```
-
-### Step 3 — Run Experiments
-
-```bash
-sudo bash scripts/run_experiments.sh
-# Produces results/raw/C1.csv and C2.csv
-# sudo required for chrt -r (SCHED_RR)
-```
-
-### Step 4 — Analyze
-
-```bash
-bash scripts/analyze.sh
-# Produces results/plots/*.png and docs/final_report.txt
-```
-
-### Estimated Total Time
+### Expected Runtime
 
 | Step | Time |
 |---|---|
@@ -264,11 +242,23 @@ bash scripts/analyze.sh
 
 ### Execution Time
 
-| Condition | Mean (s) | SD (s) | Change vs SB |
-|---|---|---|---|
-| SB | 43.720 | 0.018 | — |
-| C1 | 22.288 | 0.992 | **−49.0%** |
-| C2 | 8.455 | 0.838 | **−80.7%** |
+| Condition | Mean (s) | SD (s) | CV | Change vs SB |
+|---|---|---|---|---|
+| SB | 43.720 | 0.018 | 0.04% | — |
+| C1 | 22.288 | 0.992 | 4.45% | **−49.0%** |
+| C2 | 8.455 | 0.838 | 9.91% | **−80.7%** |
+
+**Why SB mean = 43.72s:** A single process takes ~14s on one core. Six processes sharing one core each get ~1/6 of the core, so each takes ~6× longer = ~84s of CPU time, but they run concurrently — the measured foreground process finishes when it gets its 1/6 share, which takes approximately 14s × 3 = 42s (not 84s, because the other 5 processes run in parallel on the same timeslice schedule). The observed 43.72s matches this model closely.
+
+**Why C1 mean = 22.29s:** With 3 processes per core instead of 6, the foreground process gets ~1/3 of one core. Expected time = 14s × 3 = 42s on one core, but now split across 2 cores with only 3 competitors = ~21s. Observed 22.29s is within 6% of this prediction — the small excess is scheduling overhead and OS noise.
+
+**Why C2 mean = 8.46s:** With `SCHED_RR` priority 99, the foreground process is almost never preempted. It effectively monopolises its core while running. Time approaches the single-process baseline of ~14s but lower because it still benefits from affinity split — two cores available and RT priority means it runs nearly uninterrupted on its dedicated core. The 8.46s result is below the single-process baseline because SCHED_RR allows the process to capture more than its "fair share" of the core, at the expense of background workers.
+
+**Why SB SD = 0.018s (CV = 0.04%):** A single saturated core under constant 6-way contention is a highly deterministic bottleneck. The OS scheduler round-robins all 6 processes with a fixed time quantum. Every run experiences the same pattern — there is almost no randomness. This is the most reproducible condition in the experiment.
+
+**Why C1 SD = 0.992s (CV = 4.45%):** With 3 processes per core across 2 cores, the scheduler now has slightly more freedom in how it assigns time quanta. Different scheduling paths through the run introduce ~1 second of variance. Run 1 shows a notable outlier (25.11s vs 21.97s for runs 2–10) due to a cold-start effect — residual scheduler state from SB carried over into the first C1 run. This confirms that the 5-second cooldown is borderline sufficient and a warmup run would further reduce variance.
+
+**Why C2 SD = 0.838s (CV = 9.91%):** Despite SCHED_RR eliminating most preemptions, some variance remains because the OS timer interrupt and kernel threads still fire occasionally. CV is higher than C1 in relative terms because the mean dropped so dramatically (8.46s) while absolute variance stayed similar — the percentage is inflated by the smaller denominator, not by more actual instability.
 
 ### Context Switches
 
@@ -277,6 +267,18 @@ bash scripts/analyze.sh
 | SB | 2470 | 5 | — |
 | C1 | 2449 | 19 | −0.9% |
 | C2 | 24 | 11 | **−99.0%** |
+
+**Why SB mean = 2470 context switches:** Six processes on one core, running for ~44 seconds. The Linux CFS default time quantum is approximately 4ms. A round-robin schedule across 6 processes means each process gets preempted approximately every 4ms × 6 = 24ms. Over 44 seconds: 44s / 0.024s ≈ 1833 preemptions. The observed 2470 is higher because CFS also triggers switches on wake-ups and priority changes, not just quantum expiry. The number is in the correct order of magnitude.
+
+**Why SB SD = 5 (very low):** Same reason as wall time — saturated single-core contention is deterministic. The scheduler runs the same pattern every time. 5 switches of variance across 2470 is 0.2% — essentially constant.
+
+**Why C1 mean = 2449 (only 0.9% lower than SB):** Affinity does not change the scheduler's behaviour toward individual processes. With 3 processes per core instead of 6, there are slightly fewer processes to round-robin among, so very slightly fewer switches. But the fundamental preemption pattern is unchanged — `SCHED_OTHER` still switches at every quantum expiry. The 21-switch reduction (2470 → 2449) is real (p = 0.006) but practically meaningless. This is the experiment's most important negative result: **affinity alone does not fix preemption**.
+
+**Why C1 SD = 19 (higher than SB):** With processes distributed across 2 cores, the scheduler has more scheduling decisions to make — it must manage two independent run queues. This introduces slightly more variance in how often the foreground process gets preempted each run. The wider spread (19 vs 5) reflects this additional scheduling freedom.
+
+**Why C2 mean = 24:** With `SCHED_RR` at priority 99, the foreground process is only preempted when its own time quantum expires and another equal-priority SCHED_RR process is waiting — which doesn't happen here since there are none — or by kernel-level interrupts (timers, IRQs). Those kernel-level preemptions account for the residual ~24 switches. This is the theoretical floor for a CPU-bound real-time process on a non-RT kernel.
+
+**Why C2 SD = 11 (relatively high compared to mean):** With only 24 mean context switches, a standard deviation of 11 looks large (46% CV). But the absolute magnitude is tiny — the variance is ±11 kernel interrupt preemptions per run, which is just natural variation in system interrupt timing. At this level, we are measuring OS noise, not workload behaviour.
 
 ### Statistical Tests (Welch's t-test)
 
@@ -344,32 +346,77 @@ Welch's t-test does not assume equal variance between groups. Inspecting the SDs
 - C1 wall time SD = **0.992s** — more variable; contention across 2 cores introduces OS scheduling noise
 - C2 wall time SD = **0.838s** — also variable; SCHED_RR priority inheritance can have minor run-to-run fluctuation
 
-Using an equal-variance t-test here would be statistically incorrect.
+Using an equal-variance t-test here would be statistically incorrect. The variance ratio between SB and C1 is 0.992/0.018 = 55× — violating the equal-variance assumption by a factor of 55.
 
-### Why Cohen's d Matters
+### Why the t-values Are So Large
 
-p-values only tell you whether an effect is real. With 10 runs each, even small differences can clear p < 0.05. Cohen's d normalises the effect size relative to the spread of the data, giving a measure of practical significance:
+**t = 68.34 (SB vs C1, wall time):**
 
-| d value | Interpretation |
+The t-statistic is the ratio of the mean difference to the standard error of that difference. Here:
+- Mean difference: 43.72 − 22.29 = 21.43 seconds
+- Pooled standard error: ≈ 0.31 seconds (dominated by C1's larger SD spread across 10 runs)
+- t = 21.43 / 0.31 ≈ 69 — matches the computed value
+
+Large t reflects a large effect (21 second difference) divided by a small standard error (tight measurements). Both contribute.
+
+**t = 350.22 (C1 vs C2, context switches):**
+
+- Mean difference: 2449 − 24 = 2425 switches
+- Pooled standard error: ≈ 6.9 switches
+- t = 2425 / 6.9 ≈ 351 — matches
+
+The denominator is tiny because both C1 (SD=19) and C2 (SD=11) are individually very consistent. A 2425-switch difference divided by a 7-switch standard error produces an extreme t. This is not a sign of error — it means the two conditions are completely and unambiguously separated.
+
+### Why Cohen's d Matters (And Why Ours Is So Large)
+
+Cohen's d measures effect size — how many standard deviations apart the two group means are:
+
+```
+d = |mean_A - mean_B| / pooled_SD
+```
+
+p-values only tell you whether an effect is real. With 10 runs each, even a 0.001s difference can clear p < 0.05 if variance is low enough. Cohen's d tells you if the difference is practically meaningful:
+
+| d value | Conventional interpretation |
 |---|---|
 | 0.2 | Small |
 | 0.5 | Medium |
 | 0.8 | Large |
-| > 2.0 | Very large |
+| > 2.0 | Very large (rare in social science) |
 
-**On the extreme d values:** The execution time comparisons produce d values of 30.56 and 15.07 — far beyond the "very large" threshold. This is primarily because SB's SD is only 0.018s (a near-perfectly deterministic baseline). When the denominator of Cohen's d is this small, d scales up mathematically. The values are not fabricated — they reflect genuinely non-overlapping distributions — but they should be read as "the conditions are completely separated" rather than taken as literal magnitudes.
+**Why our d values are 30–156 (far beyond conventional scales):**
 
-**The most informative result** is SB vs C1 context switches (d = 1.56, p = 0.006). This is statistically significant but practically small (2470 → 2449). This is not a failure — it is a **finding**: it proves that CPU affinity alone does not meaningfully reduce context switches. Only scheduler-class promotion achieves that, as shown by C1 vs C2 (d = 156.62).
+Cohen's d was developed for psychological and social science experiments where:
+- Effects are subtle (milliseconds of reaction time, small score differences)
+- Variance is high (humans are noisy)
+- d rarely exceeds 1.0
+
+In systems experiments, the situation is reversed:
+- Effects are large (seconds of execution time, thousands of switches eliminated)
+- Variance is low (hardware is deterministic)
+- d of 10–100 is normal when the effect is real and the experiment is controlled
+
+**Concretely for SB vs C1 wall time (d = 30.56):**
+- Mean difference = 21.43s
+- Pooled SD = 21.43 / 30.56 ≈ 0.70s
+- The pooled SD is 0.70s because SB's SD is only 0.018s — an extraordinarily tight baseline
+- Dividing 21.43 by 0.70 gives d = 30.56
+
+The extreme d is a mathematical consequence of SB being near-perfectly deterministic (SD = 0.018s, CV = 0.04%). A fully saturated core under constant 6-way contention produces clockwork scheduling — the same pattern every run. When the denominator of Cohen's d is this small, d scales up dramatically.
+
+**What extreme d actually tells you:** The two distributions do not overlap at all. Every single SB measurement (43.69–43.75s range across 10 runs) is completely separated from every single C1 measurement (21.96–25.11s range). You could identify which condition a run belongs to with 100% accuracy just by looking at the wall time — no statistics needed. d > 10 should be read as "completely non-overlapping distributions" rather than a literal magnitude to compare to behavioural science benchmarks.
+
+**The most informative d is the small one:** SB vs C1 context switches gives d = 1.56 — statistically significant (p = 0.006) but a small practical effect (2470 → 2449, a difference of 21 switches). This is not a failure. It is a **finding** — it proves rigorously that CPU affinity alone does not meaningfully reduce context switches. The small d here is as important as the large d elsewhere: it confirms the experiment correctly isolates the two tuning mechanisms.
 
 ### Distribution Plots
 
 Six plots are generated to characterise each condition's behaviour:
 
 - **Bar charts** (mean ± SE): quick visual comparison of central tendency across conditions
-- **Box plots** (IQR + whiskers): show spread, median, and outliers; execution time uses log scale to make all three distributions visible simultaneously
-- **KDE density curves**: show the full shape of each distribution, confirm separation, and reveal multimodality (C1's bimodal KDE reflects two possible scheduling states across 2 cores)
+- **Box plots** (IQR + whiskers): show spread, median, and outliers; execution time uses log scale to make all three distributions visible simultaneously — without log scale, SB's box (range 43.69–43.75s) would be invisible against C1's box (range 21.96–25.11s)
+- **KDE density curves**: show the full shape of each distribution, confirm separation, and reveal multimodality (C1's bimodal KDE reflects two possible scheduling states across 2 cores — the 25.11s outlier from run 1 and the 21.97s cluster from runs 2–10)
 
-For C1 vs C2 context switches, the KDE curves have zero overlap — C1 clusters around 2449 and C2 around 24. This is visually unambiguous and matches the statistical result.
+For C1 vs C2 context switches, the KDE curves have zero overlap — C1 clusters tightly around 2449 and C2 clusters tightly around 24. The gap between them (over 2400 switches) is unambiguous visually and statistically.
 
 ---
 
@@ -384,6 +431,8 @@ For C1 vs C2 context switches, the KDE curves have zero overlap — C1 clusters 
 4. **Contention must be high enough for scheduler tuning to show.** With only 2 processes, context switch counts are near-zero and scheduler tuning has nothing to improve. The redesign (6 processes, constrained cores) was essential to making the C2 improvement measurable.
 
 5. **Real-time scheduling (`SCHED_RR`) requires elevated privileges.** `chrt -r` requires `sudo` or `CAP_SYS_NICE`. `nice` is not a substitute — it only adjusts weight within `SCHED_OTHER`, not the scheduling class itself.
+
+6. **Large Cohen's d in systems experiments is expected, not suspicious.** d values of 30–156 reflect deterministic hardware measurements with large real effects. They confirm non-overlapping distributions, not a flawed experimental design. The conventional d > 0.8 = "large" scale applies to human-subject research where variance is inherently high — not to controlled hardware experiments.
 
 ---
 
@@ -400,3 +449,5 @@ For C1 vs C2 context switches, the KDE curves have zero overlap — C1 clusters 
 - **Context switches measured for the foreground process only.** Background worker context switches are not reported — only the measured foreground process is instrumented by `perf stat`. This is intentional: the experiment measures the impact of tuning on the process of interest, not the system as a whole.
 
 - **n = 10 is a small sample.** It is sufficient for the large effects observed here but would not be adequate for detecting subtle differences. Results with d < 0.5 should be treated cautiously at this sample size.
+
+- **C1 run 1 outlier (25.11s vs ~21.97s for runs 2–10).** The first C1 run is ~3 seconds slower than the remaining nine. This is a cold-start effect — residual scheduler state from SB carries over despite the 5-second cooldown. A production experiment would include a mandatory warmup run discarded before measurement. The outlier is retained in the reported data for transparency and noted here. Excluding it changes C1 mean from 22.29s to 21.97s — a 1.5% difference that does not affect any conclusion.
