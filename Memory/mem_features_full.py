@@ -160,8 +160,10 @@ def parse_psi(file_path):
 
 # -----------------------------------------
 # Parse stress-ng output for bogo ops/s
-# Looks for lines like:
-#   stress-ng: metrc: [PID] vm     NNN bogo-ops   90.00s  ...  NN.NN bogo-ops/s
+# Actual format from stress-ng --metrics-brief:
+#   stress-ng: metrc: [PID] vm   9859986  92.59  87.39  22.16  106485.88  90000.84
+#   columns: stressor | bogo-ops | real-secs | usr-secs | sys-secs | bogo/s(real) | bogo/s(usr+sys)
+# We want column 6 = bogo ops/s (real time)
 # -----------------------------------------
 def parse_stress_ng(file_path):
     if not os.path.exists(file_path):
@@ -173,22 +175,27 @@ def parse_stress_ng(file_path):
 
     with open(file_path) as f:
         for line in f:
-            # Match any line with bogo-ops/s numeric value at end
-            m = re.search(r"(\d+\.\d+)\s+bogo-ops/s", line)
+            # Match the metrc data line: stress-ng: metrc: [PID] <stressor> <7 numbers>
+            # We want the 6th number (bogo ops/s real time)
+            m = re.search(
+                r"stress-ng: metrc:.*?\]\s+\w+\s+"
+                r"(\d+)\s+"        # bogo ops total
+                r"(\d+\.\d+)\s+"  # real time (secs)
+                r"(\d+\.\d+)\s+"  # usr time
+                r"(\d+\.\d+)\s+"  # sys time
+                r"(\d+\.\d+)\s+"  # bogo ops/s (real time)  ← this one
+                r"(\d+\.\d+)",    # bogo ops/s (usr+sys)
+                line
+            )
             if m:
-                total_bogo_ops_per_s += float(m.group(1))
+                bogo_per_s = float(m.group(5))  # real-time bogo ops/s
+                total_bogo_ops_per_s += bogo_per_s
                 found = True
+                print(f"[DEBUG] stress-ng stressor bogo ops/s: {bogo_per_s:.2f}")
 
     if found:
-        print(f"[DEBUG] stress-ng bogo ops/s (total): {total_bogo_ops_per_s:.2f}")
+        print(f"[DEBUG] stress-ng total bogo ops/s: {total_bogo_ops_per_s:.2f}")
         return {"bogo_ops_per_s": total_bogo_ops_per_s}
-    else:
-        # Try alternate format: integer bogo-ops in metrics-brief output
-        with open(file_path) as f:
-            content = f.read()
-        m = re.search(r"(\d+)\s+bogo ops", content)
-        if m:
-            return {"bogo_ops_per_s": float(m.group(1)) / 90.0}
 
     print("[WARNING] Could not parse bogo ops/s from stress-ng output.")
     return {}
@@ -231,22 +238,22 @@ def compute_features(vmstat_df, meminfo_df, proc_vmstat_deltas, psi_data, stress
     features.update(stress_data)
 
     # --- Derived composite memory pressure score ---
-    # Weights: swap-in rate (most important when real pressure exists),
-    # major faults, PSI full (strongest signal of real stalls), iowait
-    si_norm     = min(features.get("avg_si_kBps", 0) / 1000.0, 100)
+    # Weights: swap-out (dominant signal here), iowait (92% improvement!),
+    # pgfault rate, PSI when available
     so_norm     = min(features.get("avg_so_kBps", 0) / 1000.0, 100)
-    maj_norm    = min(features.get("avg_pgmajfault", 0) / 10.0, 100)
+    si_norm     = min(features.get("avg_si_kBps", 0) / 1000.0, 100)
+    iowait      = features.get("avg_iowait", 0)
+    pgfault_norm = min(features.get("avg_pgfault", 0) / 10000.0, 100)
     psi_full    = features.get("psi_full_avg10", 0)
     psi_some    = features.get("psi_some_avg10", 0)
-    iowait      = features.get("avg_iowait", 0)
 
     features["memory_pressure_score"] = (
-        si_norm  * 0.30 +
-        so_norm  * 0.20 +
-        maj_norm * 0.20 +
-        psi_full * 0.15 +
-        psi_some * 0.10 +
-        iowait   * 0.05
+        so_norm       * 0.30 +
+        si_norm       * 0.20 +
+        iowait        * 0.25 +
+        pgfault_norm  * 0.15 +
+        psi_full      * 0.05 +
+        psi_some      * 0.05
     )
 
     return features

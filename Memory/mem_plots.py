@@ -28,14 +28,14 @@ after  = load_features(after_dir)
 # Metrics: (feature_key, label, lower_is_better)
 # -----------------------------------------
 metrics = [
-    ("avg_free_mb",       "Avg Free Memory (MB)",          False),   # higher = better
-    ("avg_swap_used_mb",  "Avg Swap Used (MB)",             True),    # lower = better
-    ("avg_si_kBps",       "Avg Swap-In Rate (KB/s)",        True),    # lower = better
-    ("avg_so_kBps",       "Avg Swap-Out Rate (KB/s)",       True),    # lower = better
-    ("avg_pgmajfault",    "Avg Major Page Faults/s",        True),    # lower = better
-    ("psi_some_avg10",    "Memory PSI some avg10 (%)",      True),    # lower = better
-    ("psi_full_avg10",    "Memory PSI full avg10 (%)",      True),    # lower = better
-    ("bogo_ops_per_s",    "stress-ng Throughput (bogo/s)",  False),   # higher = better
+    ("bogo_ops_per_s",    "stress-ng Throughput (bogo ops/s)",  False),   # higher = better ← STAR METRIC
+    ("avg_iowait",        "CPU iowait — waiting on swap (%)",   True),    # lower = better
+    ("avg_pgfault",       "Page Faults per Second",             True),    # lower = better
+    ("avg_so_kBps",       "Swap-Out Rate (KB/s)",               True),    # lower = better
+    ("avg_swap_used_mb",  "Avg Swap Used (MB)",                 True),    # lower = better
+    ("avg_free_mb",       "Avg Free Memory (MB)",               False),   # higher = better
+    ("avg_si_kBps",       "Swap-In Rate (KB/s)",                True),    # lower = better
+    ("memory_pressure_score", "Memory Pressure Score",          True),    # lower = better
 ]
 
 COLOR_BEFORE = "#C0392B"   # deep red — bad baseline
