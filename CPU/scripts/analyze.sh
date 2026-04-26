@@ -104,25 +104,34 @@ plt.tight_layout()
 plt.savefig(PLOTS / "2_context_switches_bar.png")
 plt.close()
 
-# ── Plot 3: Execution Time Box ────────────────────────────────
+# ── Plot 3: Execution Time Box (log scale) ───────────────────
+# Log scale is essential here: SB SD=0.018s is invisible on a linear
+# 0–45s axis, so boxes collapse to dots. Log scale makes all three
+# distributions visible simultaneously.
 fig, ax = plt.subplots(figsize=(7, 5))
-bp = ax.boxplot([W[k] for k in LABELS], labels=LABELS,
+bp = ax.boxplot([W[k] for k in LABELS], tick_labels=LABELS,
                 patch_artist=True, medianprops=dict(color="white", linewidth=2))
 for patch, label in zip(bp["boxes"], LABELS):
     patch.set_facecolor(COLORS[label])
     patch.set_alpha(0.85)
 for flier in bp["fliers"]:
     flier.set(marker="o", markerfacecolor="#555", markersize=5, alpha=0.6)
-ax.set_ylabel("Wall Time (s)")
-ax.set_title("Execution Time Distribution\n(box = IQR, whiskers = 1.5×IQR)",
+ax.set_yscale("log")
+ax.set_ylabel("Wall Time (s)  [log scale]")
+ax.set_title("Execution Time Distribution  (log scale)\n(box = IQR, whiskers = 1.5×IQR)",
              fontsize=13, fontweight="bold", pad=10)
+# Annotate mean on each box so values are readable on log axis
+for i, k in enumerate(LABELS, start=1):
+    ax.text(i, np.mean(W[k]), f"{np.mean(W[k]):.2f}s",
+            ha="center", va="bottom", fontsize=9, color="#333",
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.7, ec="none"))
 plt.tight_layout()
 plt.savefig(PLOTS / "3_execution_time_box.png")
 plt.close()
 
 # ── Plot 4: Context Switches Box ──────────────────────────────
 fig, ax = plt.subplots(figsize=(7, 5))
-bp = ax.boxplot([C[k] for k in LABELS], labels=LABELS,
+bp = ax.boxplot([C[k] for k in LABELS], tick_labels=LABELS,
                 patch_artist=True, medianprops=dict(color="white", linewidth=2))
 for patch, label in zip(bp["boxes"], LABELS):
     patch.set_facecolor(COLORS[label])
@@ -136,15 +145,21 @@ plt.tight_layout()
 plt.savefig(PLOTS / "4_context_switches_box.png")
 plt.close()
 
-# ── Plot 5: Execution Time KDE / Distribution ─────────────────
+# ── Plot 5: Execution Time KDE ────────────────────────────────
+# Each condition has very different spread (SB SD=0.018, C1 SD=0.99, C2 SD=0.84)
+# Use per-condition bandwidth to avoid the spike/flat issue.
 fig, ax = plt.subplots(figsize=(8, 5))
+all_w = np.concatenate([W[k] for k in LABELS])
+x_min, x_max = all_w.min() - 1, all_w.max() + 1
+xs = np.linspace(x_min, x_max, 600)
 for k in LABELS:
     data = np.array(W[k])
-    # KDE via gaussian_kde
-    kde = stats.gaussian_kde(data, bw_method="scott")
-    xs  = np.linspace(data.min() - 0.5, data.max() + 0.5, 300)
-    ax.plot(xs, kde(xs), label=k, color=COLORS[k], linewidth=2.2)
-    ax.fill_between(xs, kde(xs), alpha=0.12, color=COLORS[k])
+    # Silverman's rule but floor bandwidth at 0.3s so SB doesn't spike to infinity
+    bw = max(stats.gaussian_kde(data).factor * data.std(), 0.3)
+    kde = stats.gaussian_kde(data, bw_method=bw / data.std())
+    ys  = kde(xs)
+    ax.plot(xs, ys, label=k, color=COLORS[k], linewidth=2.2)
+    ax.fill_between(xs, ys, alpha=0.12, color=COLORS[k])
     ax.axvline(data.mean(), color=COLORS[k], linestyle="--", linewidth=1, alpha=0.7)
 ax.set_xlabel("Wall Time (s)")
 ax.set_ylabel("Density")
