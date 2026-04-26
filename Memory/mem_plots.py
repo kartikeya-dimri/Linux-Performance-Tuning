@@ -26,16 +26,21 @@ after  = load_features(after_dir)
 
 # -----------------------------------------
 # Metrics: (feature_key, label, lower_is_better)
+# NOTE: avg_free_mb and avg_available_mb are intentionally EXCLUDED.
+# With swappiness=200, kernel pushes pages to swap → more free RAM visible.
+# With swappiness=10, kernel keeps pages in RAM → less free RAM visible.
+# This makes memory-size metrics mislead in the WRONG direction for
+# swappiness tuning. Performance metrics (bogo, iowait, pgfault) tell
+# the true story.
 # -----------------------------------------
 metrics = [
-    ("bogo_ops_per_s",       "stress-ng Throughput (bogo ops/s)",  False),   # higher = better
-    ("avg_iowait",           "CPU iowait — waiting on swap (%)",   True),    # lower = better
-    ("avg_pgfault",          "Page Faults per Second",             True),    # lower = better
-    ("avg_so_kBps",          "Swap-Out Rate (KB/s)",               True),    # lower = better
-    ("avg_swap_used_mb",     "Avg Swap Used (MB)",                 True),    # lower = better
-    ("avg_available_mb",     "Avg Available Memory (MB)",          False),   # higher = better
-    ("avg_si_kBps",          "Swap-In Rate (KB/s)",                True),    # lower = better
-    ("memory_pressure_score","Memory Pressure Score",              True),    # lower = better
+    ("bogo_ops_per_s",       "stress-ng Throughput (bogo ops/s)",  False),
+    ("avg_iowait",           "CPU iowait - waiting on swap (%)",   True),
+    ("avg_pgfault",          "Page Faults per Second",             True),
+    ("avg_so_kBps",          "Swap-Out Rate (KB/s)",               True),
+    ("avg_swap_used_mb",     "Avg Swap Used (MB)",                 True),
+    ("avg_si_kBps",          "Swap-In Rate (KB/s)",                True),
+    ("memory_pressure_score","Memory Pressure Score (composite)",  True),
 ]
 
 COLOR_BEFORE = "#C0392B"   # deep red — bad baseline
@@ -85,7 +90,7 @@ def make_bar(metric, label, lower_is_better):
     if b_val != 0:
         change_pct = ((a_val - b_val) / abs(b_val)) * 100
         sign = "+" if change_pct >= 0 else ""
-        direction = "✅" if improved else "⚠️"
+        direction = "[OK]" if improved else "[!!]"
         title = f"{label}\n{direction}  {sign}{change_pct:.1f}% change"
     else:
         title = label
