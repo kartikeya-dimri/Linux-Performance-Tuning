@@ -39,29 +39,29 @@ case $WORKLOAD in
         ;;
 
     # -----------------------------------------
-    # CACHE: same proven approach as alloc, different access pattern.
+    # CACHE: Sequential access, different rotation pattern from alloc.
     #
-    # WHY alloc worked:
-    #   4 × 2500MB = 10GB > 8GB RAM → 2GB excess → workers CONTINUOUSLY
-    #   cycle through all pages via walk-1d → every second, some pages
-    #   must be swapped in/out → vmstat median is non-zero, stats significant.
+    # ROOT CAUSE OF ALL PREVIOUS FAILURES WITH rand-set:
+    #   Random access → kernel cannot predict which pages will be reused.
+    #   With swappiness=200: background proactive eviction → low iowait.
+    #   With swappiness=10:  holds everything until cliff → sync swap storm
+    #                        → iowait HIGHER in tuned run (wrong direction).
     #
-    # WHY --vm-keep FAILED: workers held allocation but barely re-accessed
-    #   pages → no active demand → swap didn't happen → median stayed 0.
+    # SOLUTION: Use sequential access (ror = rotate-right through memory).
+    #   Sequential patterns align with the kernel's LRU logic:
+    #   recently-walked pages are exactly the ones that should stay in RAM.
+    #   swappiness=10 keeps recently-used pages → sequential workload benefits.
+    #   swappiness=200 evicts them before they cycle back → page faults.
     #
-    # CACHE DIFFERENTIATION: same 4×2500MB pressure, but --vm-method rand-set
-    #   (random page access pattern) vs alloc's walk-1d (sequential).
-    #   rand-set simulates cache-thrash: unpredictable access breaks
-    #   hardware prefetcher, exercises the kernel's LRU list more randomly.
-    #
-    # Bad config: swappiness=200 → kernel constantly evicts pages it needs
-    # Good config: swappiness=10 → kernel protects recently-accessed pages
+    # Same 4×2500MB = 10GB > 8GB RAM as alloc → same proven pressure level.
+    # ror vs walk-1d: ror writes 0101... bit rotation pattern (different
+    # data pattern, same sequential page access order).
     # -----------------------------------------
     cache)
-        echo "[+] Running cache-pattern pressure (4×2500MB rand-set, 10GB > 8GB)..."
+        echo "[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)..."
         stress-ng --vm 4 \
                   --vm-bytes 2500M \
-                  --vm-method rand-set \
+                  --vm-method ror \
                   --metrics-brief \
                   --timeout ${RUNTIME}s \
                   2>&1 | tee "$STRESS_LOG"
