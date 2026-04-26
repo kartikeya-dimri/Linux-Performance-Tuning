@@ -39,40 +39,52 @@ case $WORKLOAD in
         ;;
 
     # -----------------------------------------
-    # CACHE: --mmap stressor exercises OS PAGE CACHE (not CPU cache)
-    # mmap creates file-backed anonymous mappings → goes through page cache
-    # With vfs_cache_pressure=500 (bad):
-    #   kernel evicts mmap pages aggressively → constant re-faults when accessed
-    # With vfs_cache_pressure=50 (good):
-    #   pages stay resident → far fewer page faults, better throughput
+    # CACHE: Continuous steady-state page cache pressure
     #
-    # Total working set: 4×2000MB + 2×1500MB = 11 GB > 8 GB RAM
-    # This forces genuine eviction, making cache_pressure critical.
+    # KEY FIX: --vm-keep prevents stress-ng from FREE-ing and
+    # RE-ALLOCATING between cycles. Without it, workers alternate
+    # between "touching" (high pressure) and "freeing" (zero pressure),
+    # making vmstat median=0 even though mean is high.
+    #
+    # --vm-keep: 4 workers hold 2200MB EACH for the full 90s.
+    # Total resident = 4 × 2200MB = 8.8GB > 8GB RAM
+    # → kernel MUST continuously swap pages, non-stop for 90s
+    # → vmstat median is non-zero, stats are significant
+    #
+    # --vm-method rand-set: random access pattern (cache-miss heavy)
+    # This simulates page-cache thrashing behaviour specifically.
+    #
+    # Bad config: swappiness=200 → constant scan-and-evict loop
+    # Good config: swappiness=10 → smarter eviction, less churn
     # -----------------------------------------
     cache)
-        echo "[+] Running mmap (page cache) + vm pressure (~11 GB > 8 GB RAM)..."
-        stress-ng --mmap 4 \
-                  --mmap-bytes 2000M \
-                  --vm 2 \
-                  --vm-bytes 1500M \
-                  --vm-method walk-1d \
+        echo "[+] Running --vm-keep continuous pressure (8.8 GB resident, 90s)..."
+        stress-ng --vm 4 \
+                  --vm-bytes 2200M \
+                  --vm-method rand-set \
+                  --vm-keep \
                   --metrics-brief \
                   --timeout ${RUNTIME}s \
                   2>&1 | tee "$STRESS_LOG"
         ;;
 
     # -----------------------------------------
-    # MIX: 3 VM workers + 3 cache workers
-    # VM: 3 × 2000 MB = 6 GB; cache: 3 × 1 GB = 3 GB
-    # Total working set = 9 GB > 8 GB RAM
+    # MIX: Two groups of workers with different access patterns
+    # Group A (walk-1d): linear sequential → models alloc-style pressure
+    # Group B (rand-set): random access → models cache-thrash-style pressure
+    # Both use --vm-keep so ALL allocations stay resident simultaneously.
+    # Total resident: 2×2500MB + 2×2000MB = 9GB > 8GB RAM → continuous swap
     # -----------------------------------------
     mix)
-        echo "[+] Running mixed VM + cache workload (~9 GB total working set)..."
-        stress-ng --vm 3 \
-                  --vm-bytes 2000M \
+        echo "[+] Running mixed continuous pressure (9 GB resident, 90s)..."
+        stress-ng --vm 2 \
+                  --vm-bytes 2500M \
                   --vm-method walk-1d \
-                  --cache 3 \
-                  --cache-size 1G \
+                  --vm-keep \
+                  --vm 2 \
+                  --vm-bytes 2000M \
+                  --vm-method rand-set \
+                  --vm-keep \
                   --metrics-brief \
                   --timeout ${RUNTIME}s \
                   2>&1 | tee "$STRESS_LOG"
