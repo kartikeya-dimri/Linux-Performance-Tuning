@@ -39,14 +39,20 @@ case $WORKLOAD in
         ;;
 
     # -----------------------------------------
-    # CACHE: 4 cache workers + 2 VM workers
-    # Cache workers thrash page cache; VM workers eat RAM.
-    # Combined ~9 GB pressure on 8 GB system.
+    # CACHE: --mmap stressor exercises OS PAGE CACHE (not CPU cache)
+    # mmap creates file-backed anonymous mappings → goes through page cache
+    # With vfs_cache_pressure=500 (bad):
+    #   kernel evicts mmap pages aggressively → constant re-faults when accessed
+    # With vfs_cache_pressure=50 (good):
+    #   pages stay resident → far fewer page faults, better throughput
+    #
+    # Total working set: 4×2000MB + 2×1500MB = 11 GB > 8 GB RAM
+    # This forces genuine eviction, making cache_pressure critical.
     # -----------------------------------------
     cache)
-        echo "[+] Running cache thrash + anon pressure (combined ~9 GB)..."
-        stress-ng --cache 4 \
-                  --cache-size 1G \
+        echo "[+] Running mmap (page cache) + vm pressure (~11 GB > 8 GB RAM)..."
+        stress-ng --mmap 4 \
+                  --mmap-bytes 2000M \
                   --vm 2 \
                   --vm-bytes 1500M \
                   --vm-method walk-1d \
