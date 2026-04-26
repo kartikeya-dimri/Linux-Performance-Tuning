@@ -1,0 +1,57 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║              CPU TUNING EXPERIMENT — FINAL REPORT            ║
+╚══════════════════════════════════════════════════════════════╝
+
+Design
+  Workload : prime (count primes to 25,000,000)
+  Processes: 10 runs × 6 competing processes per condition
+  SB  : 6 processes → single core  (maximum contention)
+  C1  : 6 processes → two cores    (affinity tuning)
+  C2  : 6 processes → two cores    (affinity + chrt SCHED_RR)
+
+──────────────────────────────────────────────────────────────
+ EXECUTION TIME (wall seconds)
+──────────────────────────────────────────────────────────────
+  SB  : 43.720s  ± 0.018s SD
+  C1  : 22.288s  ± 0.992s SD   (-49.0% vs SB)
+  C2  : 8.455s  ± 0.838s SD   (-80.7% vs SB)
+
+  Welch t-test (SB vs C1) : t=68.339  p=0.000000  d=30.562  → SIGNIFICANT ✓
+  Welch t-test (C1 vs C2) : t=33.693  p=0.000000  d=15.068  → SIGNIFICANT ✓
+
+──────────────────────────────────────────────────────────────
+ CONTEXT SWITCHES
+──────────────────────────────────────────────────────────────
+  SB  : 2470   ± 5 SD
+  C1  : 2449   ± 19 SD   (-0.9% vs SB)
+  C2  : 24   ± 11 SD   (-99.0% vs SB)
+
+  Welch t-test (SB vs C1) : t=3.492  p=0.005792  d=1.562  → SIGNIFICANT ✓
+  Welch t-test (C1 vs C2) : t=350.222  p=0.000000  d=156.624  → SIGNIFICANT ✓
+
+──────────────────────────────────────────────────────────────
+ CONCLUSIONS
+──────────────────────────────────────────────────────────────
+  Tuning 1 — CPU Affinity (SB → C1):
+    Hardware-level tuning. Spreading 6 processes across 2 cores
+    reduces execution time and context switches by eliminating
+    forced time-sharing on a single core.
+
+  Tuning 2 — Real-Time Scheduler (C1 → C2):
+    Scheduler-level tuning. Promoting the measured process to
+    SCHED_RR (chrt -r 99) prevents involuntary preemption by
+    lower-priority sibling processes, reducing context switches.
+
+  Note: Results reflect controlled stress conditions (6 competing
+  processes on constrained cores). Effects may differ at lower load.
+
+──────────────────────────────────────────────────────────────
+ PLOTS GENERATED
+──────────────────────────────────────────────────────────────
+  1_execution_time_bar.png     — Mean + SE bar chart
+  2_context_switches_bar.png   — Mean + SE bar chart
+  3_execution_time_box.png     — Box / IQR distribution
+  4_context_switches_box.png   — Box / IQR distribution
+  5_execution_time_kde.png     — KDE density curves
+  6_context_switches_kde.png   — KDE density curves

@@ -1,0 +1,19 @@
+=== Environment Snapshot ===
+Date         : Sun 26 Apr 2026 10:29:00 PM IST
+Kernel       : 7.0.0-14-generic
+CPU          : Intel(R) Core(TM) Ultra 5 125H
+Total cores  : 18
+
+--- Experiment Design ---
+PROCS        : 6  (competing processes per run)
+CORE_SB      : cpu7  (all processes on one core)
+CORES_C1     : cpu5,7  (processes spread, normal scheduler)
+CORES_C2     : cpu5,7  (processes spread, chrt real-time)
+
+SB: Maximum contention — 6 processes share 1 core.
+    OS must context-switch aggressively → many ctx switches.
+C1: Affinity relief — spread across 2 cores.
+    Expect: execution time ↓, context switches ↓
+C2: Scheduler tuning — chrt -r 99 (SCHED_RR real-time).
+    Expect: context switches ↓ significantly vs C1.
+============================
