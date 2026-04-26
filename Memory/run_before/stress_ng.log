@@ -1,0 +1,2 @@
+Running as unit: run-r397776092ab94530b51a04cea687d377.scope; invocation ID: f9243016a4ec4a0880edb6dbe7199756
+vm-method must be one of: all cache-lines cache-stripe checkerboard flip fwdrev galpat-0 galpat-1 gray grayflip rowhammer incdec inc-nybble lfsr32 rand-set rand-sum read64 ror swap move-inv modulo-x mscan wrrd128nt prime-0 prime-1 prime-gray-0 prime-gray-1 prime-incdec walk-0d walk-1d walk-0a walk-1a write64 write64nt write1024v zero-one
