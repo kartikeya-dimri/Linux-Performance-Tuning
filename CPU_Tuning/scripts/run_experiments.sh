@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# run_experiments.sh — Tuning cases C1 and C2
+# run_experiments.sh — C1 (affinity) and C2 (affinity + chrt real-time)
 #
-# C1: Affinity split only (powersave governor unchanged)
-#     BG on CORE_A, FG on CORE_B
-#     Isolates: does splitting cores fix contention regardless of governor?
+# C1: Same PROCS processes, spread across CORES_C1 (two cores)
+#     → less contention, fewer context switches, faster execution
 #
-# C2: Affinity split + performance governor
-#     Same split as C1, but governor switched to performance
-#     Isolates: does governor add further improvement on top of affinity?
-#
-# Run from: CPU_Tuning/  →  bash scripts/run_experiments.sh
+# C2: Same as C1, but foreground + background use chrt -r 99/98 (SCHED_RR)
+#     → real-time class dramatically reduces involuntary preemptions
+#     → context switches drop significantly vs C1
 
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
@@ -21,28 +18,20 @@ if [[ ! -f "$RAW/SB.csv" ]]; then
 fi
 
 echo "============================================================"
-echo "  TUNING EXPERIMENTS"
-echo "  CORE_A : cpu${CORE_A}   CORE_B : cpu${CORE_B}"
-echo "  Runs : $RUNS   Threads : $THREADS   Cooldown : ${WAIT}s"
+echo "  EXPERIMENTS: Affinity (C1) vs Affinity + chrt (C2)"
+echo "  Processes : $PROCS   Cooldown : ${WAIT}s"
 echo "============================================================"
 echo ""
 
-# ── C1: Affinity split only — powersave governor ─────────────────────────────
-echo "─────────────────────────────────────────────────────────────"
-echo ">>> C1: Affinity split, powersave governor"
-echo "    BG process → cpu${CORE_A}   FG process → cpu${CORE_B}"
-echo "    Each process owns a dedicated P-core"
-echo "    Governor unchanged from SB (powersave)"
-echo "─────────────────────────────────────────────────────────────"
-
-set_governor powersave
+# ── C1: Affinity split only ───────────────────────────────────
+echo ">>> C1: $PROCS processes spread across cpu${CORES_C1} (affinity only)"
 echo ""
 
 CSV="$RAW/C1.csv"
-echo "run,wall_sec,cpu_migrations" > "$CSV"
+echo "run,wall_sec,context_switches" > "$CSV"
 
 for ((i=1; i<=RUNS; i++)); do
-    measure_run "$CSV" "$i" "$RUNS" "${CORE_A}" "${CORE_B}"
+    measure_run "$CSV" "$i" "$RUNS" "${CORES_C1}" "${CORES_C1}" "normal"
     sleep "$WAIT"
 done
 
@@ -50,31 +39,28 @@ echo ""
 echo ">>> C1 complete → $CSV"
 echo ""
 
-# ── C2: Affinity split + performance governor ─────────────────────────────────
-echo "─────────────────────────────────────────────────────────────"
-echo ">>> C2: Affinity split + performance governor"
-echo "    BG process → cpu${CORE_A}   FG process → cpu${CORE_B}"
-echo "    Governor switched to performance"
-echo "    Tests: does governor add further benefit on top of affinity?"
-echo "─────────────────────────────────────────────────────────────"
-
-set_governor performance
+# ── C2: Affinity + chrt real-time ────────────────────────────
+echo ">>> C2: $PROCS processes on cpu${CORES_C2} + chrt SCHED_RR (real-time)"
+echo "        Foreground: chrt -r 99  |  Background workers: chrt -r 98"
 echo ""
 
+# Warn if not running as root (chrt -r requires CAP_SYS_NICE or root)
+if [[ $EUID -ne 0 ]]; then
+    echo "[WARN] Not running as root. chrt -r (SCHED_RR) may fail."
+    echo "       Try: sudo bash scripts/run_experiments.sh"
+    echo "       Or:  sudo setcap cap_sys_nice+ep \$(which chrt)"
+    echo ""
+fi
+
 CSV="$RAW/C2.csv"
-echo "run,wall_sec,cpu_migrations" > "$CSV"
+echo "run,wall_sec,context_switches" > "$CSV"
 
 for ((i=1; i<=RUNS; i++)); do
-    measure_run "$CSV" "$i" "$RUNS" "${CORE_A}" "${CORE_B}"
+    measure_run "$CSV" "$i" "$RUNS" "${CORES_C2}" "${CORES_C2}" "realtime"
     sleep "$WAIT"
 done
 
 echo ""
 echo ">>> C2 complete → $CSV"
 echo ""
-
-# ── Restore governor ──────────────────────────────────────────────────────────
-set_governor powersave
-echo ""
-echo ">>> ALL EXPERIMENTS COMPLETE. Governor restored to powersave."
-echo "    Now run: bash scripts/analyze.sh"
+echo ">>> Now run: bash scripts/analyze.sh"
