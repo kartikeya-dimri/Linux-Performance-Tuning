@@ -1,9 +1,12 @@
 === Environment Snapshot ===
-Date      : Sun 26 Apr 2026 02:56:31 PM IST
+Date      : Sun 26 Apr 2026 03:38:37 PM IST
 Kernel    : 7.0.0-14-generic
 CPU       : Intel(R) Core(TM) Ultra 5 125H
 Cores     : 18
-Governor  : powersave
+Governor  : performance
+P-core A  : cpu7 (4500000 kHz)
+P-core B  : cpu5 (4500000 kHz)
 Runs      : 15
 Threads   : 2
+RT throttle: -1
 ============================

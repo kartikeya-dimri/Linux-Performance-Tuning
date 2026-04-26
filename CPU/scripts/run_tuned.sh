@@ -3,11 +3,6 @@
 #
 # Place at: CPU/scripts/run_tuned.sh
 # Run from: CPU/ directory  →  bash scripts/run_tuned.sh
-#
-# State C1: CPU affinity split (process 1 → core 0, process 2 → core 1)
-# State C2: Affinity split + real-time FIFO scheduling (chrt -f 99)
-#
-# Results written to: results/state_C1.csv  and  results/state_C2.csv
 
 set -e
 
@@ -18,13 +13,11 @@ RESULTS="$PROJECT_DIR/results"
 
 source "$SCRIPT_DIR/measure.sh"
 
-# ── CONFIG (MUST match run_baseline.sh) ─────────────────────────────────────
+# ── CONFIG ────────────────────────────────────────────────────────────────────
 RUNS=15
 THREADS=2
-CPU_P1=0         # dedicated core for process 1 (affinity split)
-CPU_P2=1         # dedicated core for process 2 (affinity split)
 WAIT_BETWEEN=3
-# ────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 
 # Pre-flight
 if [[ ! -x "$WORKLOAD" ]]; then
@@ -38,6 +31,20 @@ if [[ ! -f "$RESULTS/state_B.csv" ]]; then
     exit 1
 fi
 
+# ── Detect same P-cores used in baseline ────────────────────────────────────
+echo "[env] Detecting P-cores ..."
+read -r CPU_P1 CPU_P2 < <(bash "$SCRIPT_DIR/detect_pcores.sh")
+echo "[env] P-core 1 = cpu${CPU_P1}   P-core 2 = cpu${CPU_P2}"
+echo ""
+
+# ── Lock governor (must match baseline run) ───────────────────────────────────
+if command -v cpupower &>/dev/null; then
+    sudo cpupower frequency-set -g performance -q \
+        && echo "[env] Governor: performance" \
+        || echo "[WARN] Could not lock governor"
+fi
+echo ""
+
 mkdir -p "$RESULTS"
 
 echo "=== Tuned Runs ==="
@@ -46,9 +53,9 @@ echo "Kernel : $(uname -r)"
 echo ""
 
 # ── STATE C1: Affinity split only ────────────────────────────────────────────
-echo ">>> STATE C1: Affinity split tuning"
-echo "    Process 1 → core ${CPU_P1}"
-echo "    Process 2 → core ${CPU_P2}"
+echo ">>> STATE C1: Affinity split — each process owns one dedicated P-core"
+echo "    BG:  taskset -c ${CPU_P1} ./prime $THREADS"
+echo "    FG:  taskset -c ${CPU_P2} ./prime $THREADS  (measured)"
 echo ""
 
 OUT_FILE="$RESULTS/state_C1.csv"
@@ -60,11 +67,9 @@ for ((i=1; i<=RUNS; i++)); do
     tmp_time=$(mktemp)
     tmp_perf=$(mktemp)
 
-    # Process 1 pinned to CPU_P1 (background)
     taskset -c "$CPU_P1" "$WORKLOAD" "$THREADS" &>/dev/null &
     BG_PID=$!
 
-    # Process 2 pinned to CPU_P2 (measured foreground)
     /usr/bin/time -f "%e" -o "$tmp_time" \
         perf stat -e cpu-migrations -o "$tmp_perf" -- \
         taskset -c "$CPU_P2" "$WORKLOAD" "$THREADS" \
@@ -89,28 +94,18 @@ echo ""
 
 # ── STATE C2: Affinity split + RT scheduling ──────────────────────────────────
 echo ">>> STATE C2: Affinity split + FIFO real-time scheduling (chrt -f 99)"
-echo "    NOTE: chrt -f 99 is applied via a wrapper script run as root."
-echo "          perf stat + /usr/bin/time measure the child PID from outside."
+echo "    BG:  sudo chrt -f 99 taskset -c ${CPU_P1} ./prime $THREADS"
+echo "    FG:  sudo chrt -f 99 taskset -c ${CPU_P2} ./prime $THREADS  (measured)"
 echo ""
 
-# Verify sudo works before starting the loop
-if ! sudo -v; then
-    echo "[ERROR] sudo not available or wrong password. Cannot run C2."
+# Verify sudo + chrt work before starting the loop
+if ! sudo chrt -f 10 true 2>/dev/null; then
+    echo "[ERROR] sudo chrt failed. Cannot run C2."
+    echo "        Try: sudo sysctl -w kernel.sched_rt_runtime_us=-1"
     exit 1
 fi
-
-# Write a small wrapper that sets RT scheduling on itself then execs the workload.
-# This avoids the perf-wrapping-sudo problem entirely:
-#   sudo runs only the wrapper (no interactive tty needed mid-loop)
-#   perf/time wrap the wrapper's process from the current shell (same uid)
-WRAPPER="$RESULTS/_rt_wrapper.sh"
-cat > "$WRAPPER" << WRAP
-#!/usr/bin/env bash
-# Sets FIFO RT priority on the current shell, then execs the workload.
-# Must be run as root (via sudo).
-chrt -f 99 taskset -c "\$1" "\$2" "\$3"
-WRAP
-chmod +x "$WRAPPER"
+echo "[env] chrt verified OK. RT throttle: $(cat /proc/sys/kernel/sched_rt_runtime_us)"
+echo ""
 
 OUT_FILE="$RESULTS/state_C2.csv"
 echo "run,wall_sec,cpu_migrations" > "$OUT_FILE"
@@ -121,15 +116,17 @@ for ((i=1; i<=RUNS; i++)); do
     tmp_time=$(mktemp)
     tmp_perf=$(mktemp)
 
-    # Background: RT + pinned to CPU_P1 (not measured)
-    sudo bash "$WRAPPER" "$CPU_P1" "$WORKLOAD" "$THREADS" &>/dev/null &
+    # Background: RT-elevated, pinned to P-core 1
+    # Run as a direct sudo chrt invocation — no wrapper script
+    sudo chrt -f 99 taskset -c "$CPU_P1" "$WORKLOAD" "$THREADS" &>/dev/null &
     BG_PID=$!
 
-    # Foreground: measure the sudo process itself with time+perf
-    # perf attaches to the sudo pid which forks the wrapper — migrations still visible
+    # Foreground: measured from OUTSIDE the sudo boundary
+    # /usr/bin/time and perf wrap the entire sudo+chrt+taskset+workload chain
+    # cpu-migrations are still visible because perf attaches to the process tree
     /usr/bin/time -f "%e" -o "$tmp_time" \
         perf stat -e cpu-migrations -o "$tmp_perf" -- \
-        sudo bash "$WRAPPER" "$CPU_P2" "$WORKLOAD" "$THREADS" \
+        sudo chrt -f 99 taskset -c "$CPU_P2" "$WORKLOAD" "$THREADS" \
         2>/dev/null
 
     wait "$BG_PID" 2>/dev/null || true
@@ -140,9 +137,9 @@ for ((i=1; i<=RUNS; i++)); do
     mig=${mig:-0}
     rm -f "$tmp_time" "$tmp_perf"
 
-    # Validate we got a real number
-    if [[ -z "$wall" || "$wall" == "0.00" || "$wall" == "0" ]]; then
-        echo "FAILED (wall=$wall) — chrt may have been denied. Skipping run."
+    # Guard: wall must be > 0.5s — sudo overhead alone is <0.01s
+    if [[ -z "$wall" ]] || (( $(echo "$wall < 0.5" | bc -l) )); then
+        echo "INVALID (wall=$wall) — skipping"
         continue
     fi
 
@@ -151,21 +148,13 @@ for ((i=1; i<=RUNS; i++)); do
     sleep "$WAIT_BETWEEN"
 done
 
-rm -f "$WRAPPER"
-
-# Count valid rows (excluding header)
-VALID_ROWS=$(tail -n +2 "$OUT_FILE" | wc -l)
-if [[ "$VALID_ROWS" -eq 0 ]]; then
-    echo ""
-    echo "[ERROR] No valid C2 data collected. Likely cause: chrt -f 99 requires"
-    echo "        RLIMIT_RTPRIO or CAP_SYS_NICE. Try:"
-    echo "        sudo sysctl -w kernel.sched_rt_runtime_us=-1"
-    echo "        Then re-run: bash scripts/run_tuned.sh"
-    echo ""
-    echo "        Alternatively, compare.sh will skip C2 and report C1 only."
+VALID=$(tail -n +2 "$OUT_FILE" | wc -l)
+echo ""
+if [[ "$VALID" -eq 0 ]]; then
+    echo "[ERROR] No valid C2 data. chrt may be silently failing."
+    echo "        Paste this output: sudo chrt -f 99 taskset -c $CPU_P2 $WORKLOAD $THREADS"
 else
-    echo ""
-    echo ">>> C2 done ($VALID_ROWS/$RUNS valid runs). Results: $OUT_FILE"
+    echo ">>> C2 done ($VALID/$RUNS valid runs). Results: $OUT_FILE"
 fi
 
 echo ""

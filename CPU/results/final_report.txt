@@ -3,61 +3,78 @@
 ======================================================================
 
 === Environment Snapshot ===
-Date      : Sun 26 Apr 2026 02:56:31 PM IST
+Date      : Sun 26 Apr 2026 03:38:37 PM IST
 Kernel    : 7.0.0-14-generic
 CPU       : Intel(R) Core(TM) Ultra 5 125H
 Cores     : 18
-Governor  : powersave
+Governor  : performance
+P-core A  : cpu7 (4500000 kHz)
+P-core B  : cpu5 (4500000 kHz)
 Runs      : 15
 Threads   : 2
+RT throttle: -1
 ============================
 
 ── RAW STATISTICS ──────────────────────────────────────────────────────
 
   State A  (clean baseline, no contention)
     n                    : 15
-    wall_time  mean      : 1.7900 s
-    wall_time  stdev     : 0.1176 s
-    wall_time  stderr    : 0.0304 s
-    wall_time  [min,max] : [1.6500, 2.0800] s
-    migrations mean      : 4.80
-    migrations stdev     : 2.40
+    wall_time  mean      : 0.7987 s
+    wall_time  stdev     : 0.0631 s
+    wall_time  stderr    : 0.0163 s
+    wall_time  [min,max] : [0.7600, 0.9900] s
+    migrations mean      : 1.60
+    migrations stdev     : 0.74
 
   State B  (synthetic contention, same CPUs — the problem)
     n                    : 15
-    wall_time  mean      : 2.5133 s
-    wall_time  stdev     : 0.0625 s
-    wall_time  stderr    : 0.0161 s
-    wall_time  [min,max] : [2.3100, 2.5700] s
-    migrations mean      : 3.53
-    migrations stdev     : 2.75
+    wall_time  mean      : 1.5093 s
+    wall_time  stdev     : 0.0515 s
+    wall_time  stderr    : 0.0133 s
+    wall_time  [min,max] : [1.4700, 1.6900] s
+    migrations mean      : 4.00
+    migrations stdev     : 1.07
 
   State C1 (affinity split only — Tuning 1)
     n                    : 15
-    wall_time  mean      : 1.8233 s
-    wall_time  stdev     : 0.0123 s
-    wall_time  stderr    : 0.0032 s
-    wall_time  [min,max] : [1.8000, 1.8500] s
+    wall_time  mean      : 1.5133 s
+    wall_time  stdev     : 0.0072 s
+    wall_time  stderr    : 0.0019 s
+    wall_time  [min,max] : [1.5000, 1.5200] s
     migrations mean      : 1.00
     migrations stdev     : 0.00
 
   State C2 (affinity split + RT scheduling — Tuning 2)
-    [NO DATA]
+    n                    : 15
+    wall_time  mean      : 1.5247 s
+    wall_time  stdev     : 0.0064 s
+    wall_time  stderr    : 0.0017 s
+    wall_time  [min,max] : [1.5200, 1.5400] s
+    migrations mean      : 0.00
+    migrations stdev     : 0.00
 
 ── COMPARISONS ─────────────────────────────────────────────────────────
 
   Reference state: B (contention, no tuning)
 
   [Tuning 1] Affinity Split  (C1 vs B):
-    wall_time improvement : +27.45%  (2.5133s → 1.8233s)
-    migration reduction   : +71.70%  (3.53 → 1.00)
-    Welch t-stat          : 41.9305  (df=15.1)
+    wall_time improvement : -0.27%  (1.5093s → 1.5133s)
+    migration reduction   : +75.00%  (4.00 → 1.00)
+    Welch t-stat          : -0.2980  (df=14.6)
+    Interpretation        : not significant at α=0.05
+
+
+  [Tuning 2] Affinity Split + RT Sched  (C2 vs B):
+    wall_time improvement : -1.02%  (1.5093s → 1.5247s)
+    migration reduction   : +100.00%  (4.00 → 0.00)
+    Welch t-stat          : -1.1449  (df=14.4)
+    Interpretation        : not significant at α=0.05
+
+
+  [Isolation] RT scheduling contribution (C2 vs C1):
+    additional improvement: -0.75%  (1.5133s → 1.5247s)
+    Welch t-stat          : -4.5434  (df=27.6)
     Interpretation        : SIGNIFICANT (|t|>2)
-
-
-  [Tuning 2] Affinity Split + RT Sched  (C2 vs B)
-    [SKIPPED — no data]
-
 
 ── CONCLUSION ───────────────────────────────────────────────────────
 
