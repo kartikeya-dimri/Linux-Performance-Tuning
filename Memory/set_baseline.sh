@@ -2,20 +2,15 @@
 
 echo "[+] Setting safe baseline memory configuration..."
 
-# Moderate swappiness (kernel default)
 sudo sysctl -w vm.swappiness=60
-
-# Reasonable dirty page write-back thresholds
+sudo sysctl -w vm.vfs_cache_pressure=100
 sudo sysctl -w vm.dirty_ratio=20
 sudo sysctl -w vm.dirty_background_ratio=10
-
-# THP: madvise (safe default — only use when process asks)
+sudo sysctl -w vm.min_free_kbytes=65536
 echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled > /dev/null
 
 echo "[+] Baseline configuration applied."
-
-# Verify
 echo ""
 echo "[+] Current settings:"
-sysctl vm.swappiness vm.dirty_ratio vm.dirty_background_ratio
+sysctl vm.swappiness vm.vfs_cache_pressure vm.dirty_ratio vm.dirty_background_ratio vm.min_free_kbytes
 cat /sys/kernel/mm/transparent_hugepage/enabled

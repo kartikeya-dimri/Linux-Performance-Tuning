@@ -14,15 +14,13 @@ uname -a > "$OUTPUT_DIR/system_info.txt"
 free -m  > "$OUTPUT_DIR/memory_snapshot.txt"
 
 # -----------------------------------------
-# Background: vmstat (classic swap/memory cols)
-# Columns we care about: si, so, free, buff, cache, wa
+# Background: vmstat (swap/memory/cpu cols)
 # -----------------------------------------
 vmstat $INTERVAL > "$OUTPUT_DIR/vmstat.log" &
 PID_VMSTAT=$!
 
 # -----------------------------------------
 # Background: periodic /proc/meminfo snapshots
-# Captures: MemFree, MemAvailable, Cached, Buffers, SwapUsed, etc.
 # -----------------------------------------
 (
 while true; do
@@ -36,7 +34,7 @@ PID_MEMINFO=$!
 
 # -----------------------------------------
 # Background: periodic /proc/vmstat snapshots
-# Captures: pgfault, pgmajfault, pswpin, pswpout deltas
+# For pgfault, pgmajfault, pswpin, pswpout deltas
 # -----------------------------------------
 (
 while true; do
@@ -63,8 +61,9 @@ PID_PSI=$!
 # Let monitors warm up
 sleep 3
 
-echo "[+] Running workload..."
-./run_workload.sh $WORKLOAD
+echo "[+] Running workload (with cgroup RAM cap)..."
+# Pass OUTPUT_DIR so stress-ng log goes into the right place
+./run_workload.sh $WORKLOAD $OUTPUT_DIR
 
 echo "[+] Stopping monitoring..."
 
@@ -76,8 +75,6 @@ kill $PID_PSI         2>/dev/null
 wait 2>/dev/null
 
 echo "[+] Cleaning logs..."
-
-# Remove vmstat header noise (lines starting with 'procs')
 grep -v "procs" "$OUTPUT_DIR/vmstat.log" | sed '/^$/d' > "$OUTPUT_DIR/vmstat_clean.log"
 
 echo "[+] Done. Logs saved in $OUTPUT_DIR"

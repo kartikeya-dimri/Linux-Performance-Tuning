@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 before_dir = input("Enter BEFORE directory path: ").strip()
 after_dir  = input("Enter AFTER directory path: ").strip()
@@ -25,65 +25,89 @@ before = load_features(before_dir)
 after  = load_features(after_dir)
 
 # -----------------------------------------
-# Metrics to plot (analogous to disk's avg_await, avg_iops, etc.)
+# Metrics: (feature_key, label, lower_is_better)
 # -----------------------------------------
-metrics = {
-    "avg_free_mb":      "Avg Free Memory (MB) ↑ better",
-    "avg_pgmajfault":   "Avg Major Page Faults/s ↓ better",
-    "avg_si_kBps":      "Avg Swap In Rate (KB/s) ↓ better",
-    "avg_so_kBps":      "Avg Swap Out Rate (KB/s) ↓ better",
-    "psi_some_avg10":   "Memory PSI some avg10 ↓ better",
-}
+metrics = [
+    ("avg_free_mb",       "Avg Free Memory (MB)",          False),   # higher = better
+    ("avg_swap_used_mb",  "Avg Swap Used (MB)",             True),    # lower = better
+    ("avg_si_kBps",       "Avg Swap-In Rate (KB/s)",        True),    # lower = better
+    ("avg_so_kBps",       "Avg Swap-Out Rate (KB/s)",       True),    # lower = better
+    ("avg_pgmajfault",    "Avg Major Page Faults/s",        True),    # lower = better
+    ("psi_some_avg10",    "Memory PSI some avg10 (%)",      True),    # lower = better
+    ("psi_full_avg10",    "Memory PSI full avg10 (%)",      True),    # lower = better
+    ("bogo_ops_per_s",    "stress-ng Throughput (bogo/s)",  False),   # higher = better
+]
 
-COLORS_BEFORE = "#E05C5C"   # red-ish for bad baseline
-COLORS_AFTER  = "#4CAF7D"   # green for tuned
+COLOR_BEFORE = "#C0392B"   # deep red — bad baseline
+COLOR_AFTER  = "#27AE60"   # deep green — tuned
 
 
-for metric, label in metrics.items():
+def make_bar(metric, label, lower_is_better):
     if metric not in before.index or metric not in after.index:
-        print(f"[SKIP] {metric} not found in features — skipping plot.")
-        continue
+        print(f"[SKIP] {metric} not in features.")
+        return
 
-    b_val = before[metric]
-    a_val = after[metric]
+    b_val = float(before[metric])
+    a_val = float(after[metric])
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    if b_val == 0 and a_val == 0:
+        print(f"[SKIP] {metric}: both values are 0.")
+        return
+
+    # Determine if improvement happened
+    if lower_is_better:
+        improved = a_val < b_val
+    else:
+        improved = a_val > b_val
+
+    fig, ax = plt.subplots(figsize=(6, 4.5))
+
     bars = ax.bar(
-        ["Baseline", "Tuned"],
+        ["Baseline\n(Bad Config)", "Tuned\n(Optimized)"],
         [b_val, a_val],
-        color=[COLORS_BEFORE, COLORS_AFTER],
+        color=[COLOR_BEFORE, COLOR_AFTER],
         edgecolor="black",
         linewidth=0.8,
         width=0.5
     )
 
-    # Annotate bar values
+    # Value labels on bars
     for bar, val in zip(bars, [b_val, a_val]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() * 1.02,
-            f"{val:.2f}",
+            bar.get_height() * 1.03,
+            f"{val:.1f}",
             ha="center", va="bottom",
-            fontsize=10, fontweight="bold"
+            fontsize=11, fontweight="bold"
         )
 
-    # Compute change %
+    # Change % in title
     if b_val != 0:
         change_pct = ((a_val - b_val) / abs(b_val)) * 100
         sign = "+" if change_pct >= 0 else ""
-        ax.set_title(f"{label}\n({sign}{change_pct:.1f}% change)", fontsize=11)
+        direction = "✅" if improved else "⚠️"
+        title = f"{label}\n{direction}  {sign}{change_pct:.1f}% change"
     else:
-        ax.set_title(label, fontsize=11)
+        title = label
 
-    ax.set_ylabel(metric)
-    ax.set_xlabel("Configuration")
+    ax.set_title(title, fontsize=11, pad=10)
+    ax.set_ylabel(label.split("(")[-1].replace(")", "") if "(" in label else label)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    plt.tight_layout()
 
+    # Legend
+    before_patch = mpatches.Patch(color=COLOR_BEFORE, label="Baseline (bad config)")
+    after_patch  = mpatches.Patch(color=COLOR_AFTER,  label="Tuned (optimized)")
+    ax.legend(handles=[before_patch, after_patch], loc="upper right", fontsize=8)
+
+    plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, f"{metric}.png")
-    plt.savefig(out_path, dpi=120)
+    plt.savefig(out_path, dpi=130)
     plt.close()
-    print(f"[+] Saved: {out_path}")
+    print(f"[+] Saved: {out_path}  ({b_val:.1f} → {a_val:.1f})")
+
+
+for (metric, label, lower_is_better) in metrics:
+    make_bar(metric, label, lower_is_better)
 
 print(f"\n[+] All plots saved in {OUTPUT_DIR}/")
