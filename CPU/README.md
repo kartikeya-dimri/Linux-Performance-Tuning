@@ -31,7 +31,6 @@ CPU_Tuning/
 │   └── build.sh            # compile script
 ├── scripts/
 │   ├── common.sh           # shared config + measure_run() helper
-│   ├── detect_pcores.sh    # auto-detect P-cores on hybrid Intel CPUs
 │   ├── run_baselines.sh    # collect SB (contention baseline)
 │   ├── run_experiments.sh  # collect C1 (affinity) and C2 (scheduler)
 │   └── analyze.sh          # stats, plots, final report
