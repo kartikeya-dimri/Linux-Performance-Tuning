@@ -13,5 +13,6 @@
     "avg_pswpout": 8073.443298969072,
     "psi_some_avg10": 0.0,
     "psi_full_avg10": 0.0,
-    "memory_pressure_score": 7.474792752264918
+    "bogo_ops_per_s": 106485.88,
+    "memory_pressure_score": 16.7602276621889
 }
