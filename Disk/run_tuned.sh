@@ -2,22 +2,17 @@
 
 WORKLOAD=$1
 FILE="testfile"
-SIZE="4G"        # bigger than RAM (important)
+SIZE="4G"
 RUNTIME=90
 
 echo "[+] Running workload: $WORKLOAD"
 
-# Create file if not exists
 if [ ! -f "$FILE" ]; then
     echo "[+] Creating large test file..."
     dd if=/dev/zero of=$FILE bs=1M count=4096 status=progress
 fi
 
 case $WORKLOAD in
-
-    # -----------------------------------------
-    # SEQUENTIAL (bandwidth stress)
-    # -----------------------------------------
     seq)
         fio --name=seq_read \
             --filename=$FILE \
@@ -29,13 +24,9 @@ case $WORKLOAD in
             --ioengine=libaio \
             --runtime=$RUNTIME \
             --time_based \
-            --direct=1 \
-            --group_reporting
+            --direct=1
         ;;
 
-    # -----------------------------------------
-    # RANDOM (max contention)
-    # -----------------------------------------
     rand)
         fio --name=rand_read \
             --filename=$FILE \
@@ -47,13 +38,9 @@ case $WORKLOAD in
             --ioengine=libaio \
             --runtime=$RUNTIME \
             --time_based \
-            --direct=1 \
-            --group_reporting
+            --direct=1
         ;;
 
-    # -----------------------------------------
-    # MIXED (real-world stress)
-    # -----------------------------------------
     mix)
         fio --name=rand_mix \
             --filename=$FILE \
@@ -66,8 +53,7 @@ case $WORKLOAD in
             --ioengine=libaio \
             --runtime=$RUNTIME \
             --time_based \
-            --direct=1 \
-            --group_reporting
+            --direct=1
         ;;
 
     *)

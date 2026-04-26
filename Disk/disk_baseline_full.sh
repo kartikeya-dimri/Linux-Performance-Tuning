@@ -1,136 +1,238 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# execute as : 
-# chmod +x disk_baseline_full.sh
-# ./disk_baseline_full.sh
+import os
+import re
+import json
+import pandas as pd
 
-# ==========================================
-# Comprehensive Disk Baseline Collection
-# ==========================================
+INPUT_DIR = input("Enter baseline directory path: ").strip()
 
-DURATION=60        # seconds
-INTERVAL=1         # sampling interval
-OUTPUT_DIR="disk_baseline_$(date +%Y%m%d_%H%M%S)"
+iostat_file = os.path.join(INPUT_DIR, "iostat_clean.log")
+vmstat_file = os.path.join(INPUT_DIR, "vmstat_clean.log")
+pidstat_file = os.path.join(INPUT_DIR, "pidstat.log")
+psi_file = os.path.join(INPUT_DIR, "psi_io.log")
 
-mkdir -p "$OUTPUT_DIR"
 
-echo "Starting comprehensive disk baseline collection..."
-echo "Duration: $DURATION seconds"
-echo "Interval: $INTERVAL sec"
-echo "Output: $OUTPUT_DIR"
+# -----------------------------------------
+# Parse iostat
+# -----------------------------------------
+def parse_iostat(file_path):
+    data = []
+    headers = []
 
-# ------------------------------------------
-# System Snapshot (one-time)
-# ------------------------------------------
-echo "[+] Collecting system metadata..."
+    with open(file_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
 
-uname -a > "$OUTPUT_DIR/system_info.txt"
-lsblk -o NAME,KNAME,TYPE,SIZE,ROTA,MOUNTPOINT > "$OUTPUT_DIR/disk_layout.txt"
-df -h > "$OUTPUT_DIR/filesystem_usage.txt"
-free -m > "$OUTPUT_DIR/memory_snapshot.txt"
-uptime > "$OUTPUT_DIR/uptime_snapshot.txt"
-cat /proc/cpuinfo > "$OUTPUT_DIR/cpuinfo.txt"
+            if line.startswith("Device"):
+                headers = re.split(r"\s+", line)
+                continue
 
-# ------------------------------------------
-# Start Monitoring Processes
-# ------------------------------------------
+            if headers:
+                values = re.split(r"\s+", line)
+                if len(values) == len(headers):
+                    data.append(dict(zip(headers, values)))
 
-echo "[+] Starting monitoring tools..."
+    df = pd.DataFrame(data)
 
-# iostat (FULL extended metrics)
-iostat -x -m $INTERVAL > "$OUTPUT_DIR/iostat.log" &
-PID_IOSTAT=$!
+    for col in df.columns:
+        if col != "Device":
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-# vmstat (CPU + iowait + memory)
-vmstat $INTERVAL > "$OUTPUT_DIR/vmstat.log" &
-PID_VMSTAT=$!
+    # Filter only main disk
+    df = df[df["Device"] == "sda"]
 
-# mpstat (per CPU)
-mpstat -P ALL $INTERVAL > "$OUTPUT_DIR/mpstat.log" &
-PID_MPSTAT=$!
+    print("[DEBUG] iostat columns:", list(df.columns))
 
-# pidstat (per-process disk + memory)
-pidstat -d -r $INTERVAL > "$OUTPUT_DIR/pidstat.log" &
-PID_PIDSTAT=$!
+    return df
 
-# uptime (continuous load avg logging)
-(
-while true; do
-    date +"%F %T" >> "$OUTPUT_DIR/uptime.log"
-    uptime >> "$OUTPUT_DIR/uptime.log"
-    sleep $INTERVAL
-done
-) &
-PID_UPTIME=$!
 
-# PSI (I/O pressure stall info)
-(
-while true; do
-    date +"%F %T" >> "$OUTPUT_DIR/psi_io.log"
-    cat /proc/pressure/io >> "$OUTPUT_DIR/psi_io.log"
-    sleep $INTERVAL
-done
-) &
-PID_PSI=$!
+# -----------------------------------------
+# Parse vmstat
+# -----------------------------------------
+def parse_vmstat(file_path):
+    data = []
+    headers = []
 
-# /proc/diskstats (raw kernel counters)
-(
-while true; do
-    date +"%F %T" >> "$OUTPUT_DIR/diskstats.log"
-    cat /proc/diskstats >> "$OUTPUT_DIR/diskstats.log"
-    sleep $INTERVAL
-done
-) &
-PID_DISKSTATS=$!
+    with open(file_path) as f:
+        for line in f:
+            line = line.strip()
 
-# ------------------------------------------
-# Run for fixed duration
-# ------------------------------------------
-echo "[+] Collecting data..."
-sleep $DURATION
+            if line.startswith("r "):
+                headers = re.split(r"\s+", line)
+                continue
 
-# ------------------------------------------
-# Stop all background processes
-# ------------------------------------------
-echo "[+] Stopping monitoring..."
+            if headers:
+                values = re.split(r"\s+", line)
+                if len(values) == len(headers):
+                    data.append(dict(zip(headers, values)))
 
-kill $PID_IOSTAT 2>/dev/null
-kill $PID_VMSTAT 2>/dev/null
-kill $PID_MPSTAT 2>/dev/null
-kill $PID_PIDSTAT 2>/dev/null
-kill $PID_UPTIME 2>/dev/null
-kill $PID_PSI 2>/dev/null
-kill $PID_DISKSTATS 2>/dev/null
+    df = pd.DataFrame(data)
 
-wait 2>/dev/null
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-echo "[+] Collection complete."
+    return df
 
-# ------------------------------------------
-# Basic Cleaning / Structuring
-# ------------------------------------------
 
-echo "[+] Preparing cleaned outputs..."
+# -----------------------------------------
+# Parse pidstat
+# -----------------------------------------
+def parse_pidstat(file_path):
+    data = []
 
-# Clean iostat header noise
-grep -v "Linux" "$OUTPUT_DIR/iostat.log" | sed '/^$/d' > "$OUTPUT_DIR/iostat_clean.log"
+    with open(file_path) as f:
+        for line in f:
+            line = line.strip()
 
-# Clean vmstat header
-grep -v "procs" "$OUTPUT_DIR/vmstat.log" | sed '/^$/d' > "$OUTPUT_DIR/vmstat_clean.log"
+            if not line or "UID" in line or "Average" in line:
+                continue
 
-# Extract only relevant iostat columns (optional quick view)
-awk '
-/Device/ {header=$0}
-!/Device/ && NF>0 {print header "\n" $0}
-' "$OUTPUT_DIR/iostat_clean.log" > "$OUTPUT_DIR/iostat_structured.log"
+            parts = re.split(r"\s+", line)
+            if len(parts) < 7:
+                continue
 
-echo "[+] Summary of collected signals:"
-echo "  - Disk utilization, latency, IOPS, throughput (iostat)"
-echo "  - Read vs write latency + request size"
-echo "  - CPU iowait + system activity (vmstat)"
-echo "  - Per-process disk usage (pidstat)"
-echo "  - Load average over time (uptime)"
-echo "  - I/O stall pressure (PSI)"
-echo "  - Raw disk counters (/proc/diskstats)"
+            try:
+                kb_rd = float(parts[-4])
+                kb_wr = float(parts[-3])
+                cmd = parts[-1]
 
-echo "[+] All logs available in: $OUTPUT_DIR"
+                data.append({
+                    "command": cmd,
+                    "total_io": kb_rd + kb_wr
+                })
+            except:
+                continue
+
+    if not data:
+        return {}
+
+    df = pd.DataFrame(data)
+    grouped = df.groupby("command").sum().sort_values("total_io", ascending=False)
+
+    return {
+        "top_io_process": grouped.index[0],
+        "top_io_kB": grouped.iloc[0]["total_io"]
+    }
+
+
+# -----------------------------------------
+# Parse PSI
+# -----------------------------------------
+def parse_psi(file_path):
+    some_vals = []
+
+    with open(file_path) as f:
+        for line in f:
+            if "some avg10=" in line:
+                match = re.search(r"avg10=(\d+\.\d+)", line)
+                if match:
+                    some_vals.append(float(match.group(1)))
+
+    return {
+        "psi_some_avg10": sum(some_vals) / len(some_vals) if some_vals else 0
+    }
+
+
+# -----------------------------------------
+# Feature Computation
+# -----------------------------------------
+def compute_features(iostat_df, vmstat_df, pidstat_data, psi_data):
+    features = {}
+
+    # -----------------------------
+    # Latency
+    # -----------------------------
+    if "await" in iostat_df.columns:
+        features["avg_await"] = iostat_df["await"].mean()
+    elif "r_await" in iostat_df.columns:
+        features["avg_await"] = iostat_df["r_await"].mean()
+    else:
+        features["avg_await"] = 0
+
+    # -----------------------------
+    # Queue
+    # -----------------------------
+    if "aqu-sz" in iostat_df.columns:
+        features["avg_queue"] = iostat_df["aqu-sz"].mean()
+    elif "avgqu-sz" in iostat_df.columns:
+        features["avg_queue"] = iostat_df["avgqu-sz"].mean()
+    else:
+        features["avg_queue"] = 0
+
+    # -----------------------------
+    # Utilization
+    # -----------------------------
+    features["avg_util"] = iostat_df["%util"].mean()
+
+    # -----------------------------
+    # IOPS
+    # -----------------------------
+    if "r/s" in iostat_df.columns and "w/s" in iostat_df.columns:
+        features["avg_iops"] = (iostat_df["r/s"] + iostat_df["w/s"]).mean()
+    else:
+        features["avg_iops"] = 0
+
+    # -----------------------------
+    # Throughput
+    # -----------------------------
+    if "rkB/s" in iostat_df.columns:
+        features["avg_throughput_kBps"] = (
+            iostat_df["rkB/s"] + iostat_df["wkB/s"]
+        ).mean()
+    elif "rMB/s" in iostat_df.columns:
+        features["avg_throughput_kBps"] = (
+            (iostat_df["rMB/s"] + iostat_df["wMB/s"]) * 1024
+        ).mean()
+    else:
+        features["avg_throughput_kBps"] = 0
+
+    # -----------------------------
+    # CPU interaction
+    # -----------------------------
+    features["avg_iowait"] = vmstat_df["wa"].mean()
+
+    # -----------------------------
+    # Merge extras
+    # -----------------------------
+    features.update(pidstat_data)
+    features.update(psi_data)
+
+    # -----------------------------
+    # Derived score
+    # -----------------------------
+    features["disk_pressure_score"] = (
+        features["avg_util"] * 0.3 +
+        features["avg_queue"] * 0.3 +
+        features["avg_iowait"] * 0.2 +
+        features.get("psi_some_avg10", 0) * 0.2
+    )
+
+    return features
+
+
+# -----------------------------------------
+# Main
+# -----------------------------------------
+def main():
+    iostat_df = parse_iostat(iostat_file)
+    vmstat_df = parse_vmstat(vmstat_file)
+    pidstat_data = parse_pidstat(pidstat_file)
+    psi_data = parse_psi(psi_file)
+
+    features = compute_features(iostat_df, vmstat_df, pidstat_data, psi_data)
+
+    json_path = os.path.join(INPUT_DIR, "disk_features_full.json")
+
+    with open(json_path, "w") as f:
+        json.dump(features, f, indent=4)
+
+    print("\n[+] Features extracted:")
+    for k, v in features.items():
+        print(f"{k}: {round(v,2) if isinstance(v,float) else v}")
+
+
+if __name__ == "__main__":
+    main()

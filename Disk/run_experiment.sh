@@ -1,74 +1,57 @@
 #!/bin/bash
 
-# chmod +x run_experiment.sh
-# ==========================================
-# Full Experiment Pipeline
-# ==========================================
-
 WORKLOAD=$1
+DEVICE="sda"
 
-echo "=================================="
-echo " Running Experiment: $WORKLOAD"
-echo "=================================="
+if [ -z "$WORKLOAD" ]; then
+    echo "Usage: $0 {rand|seq|mix}"
+    exit 1
+fi
 
-# -------------------------------
-# BEFORE (Baseline under load)
-# -------------------------------
-echo "[1] Collecting BEFORE metrics..."
-./run_monitoring.sh $WORKLOAD
+echo "===== BASELINE RUN ====="
 
-BEFORE_DIR=$(ls -td run_* | head -1)
+./reset_system.sh
 
-# Feature extraction
-echo "[2] Extracting features (BEFORE)..."
-python3 disk_features_full.py <<EOF
-$BEFORE_DIR
-EOF
+# BAD baseline (deliberately wrong config per workload)
+echo none | sudo tee /sys/block/$DEVICE/queue/scheduler > /dev/null
+if [ "$WORKLOAD" == "rand" ]; then
+    sudo blockdev --setra 1024 /dev/$DEVICE
+elif [ "$WORKLOAD" == "seq" ]; then
+    sudo blockdev --setra 32 /dev/$DEVICE
+elif [ "$WORKLOAD" == "mix" ]; then
+    sudo blockdev --setra 4096 /dev/$DEVICE
+else
+    sudo blockdev --setra 128 /dev/$DEVICE
+fi
 
-# Classification
-echo "[3] Classification (BEFORE)..."
-python3 disk_classification.py <<EOF
-$BEFORE_DIR/disk_features_full.json
-EOF
+./run_monitoring.sh $WORKLOAD run_before
 
-# -------------------------------
-# TUNING
-# -------------------------------
-echo "[4] Applying tuning..."
-python3 disk_tuning.py <<EOF
-sda
-$BEFORE_DIR/disk_features_full.json
-EOF
+echo run_before | python3 disk_features_full.py
 
-echo ">>> Apply the above commands manually, then press ENTER"
+# Safety check
+if [ ! -f "run_before/disk_features_full.json" ]; then
+    echo "[ERROR] Feature extraction failed"
+    exit 1
+fi
+
+echo "===== TUNING ====="
+
+echo -e "$DEVICE\nrun_before/disk_features_full.json" | python3 disk_tuning.py
+
+echo "Apply tuning manually and press ENTER"
 read
 
-# -------------------------------
-# AFTER (Post-tuning)
-# -------------------------------
-echo "[5] Collecting AFTER metrics..."
-./run_monitoring.sh $WORKLOAD
+echo "===== TUNED RUN ====="
 
-AFTER_DIR=$(ls -td run_* | head -1)
+./reset_system.sh
 
-# Feature extraction
-echo "[6] Extracting features (AFTER)..."
-python3 disk_features_full.py <<EOF
-$AFTER_DIR
-EOF
+./run_monitoring.sh $WORKLOAD run_after
 
-# -------------------------------
-# PLOTTING
-# -------------------------------
-echo "[7] Generating comparison plots..."
-python3 disk_plots.py <<EOF
-$BEFORE_DIR
-$AFTER_DIR
-EOF
+echo run_after | python3 disk_features_full.py
 
-echo "=================================="
-echo " Experiment Complete"
-echo "=================================="
-echo "Before: $BEFORE_DIR"
-echo "After : $AFTER_DIR"
-echo "Plots : comparison_plots/"
+echo -e "run_before\nrun_after" | python3 disk_plots.py
+
+# Statistical Significance (Intra-run)
+python3 disk_stats.py intra run_before run_after
+
+echo "DONE"

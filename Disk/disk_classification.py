@@ -3,14 +3,14 @@
 import json
 
 # -----------------------------------------
-# Thresholds (tunable, but grounded)
+# Thresholds
 # -----------------------------------------
 THRESHOLDS = {
-    "high_util": 70,          # %
-    "high_iowait": 10,        # %
-    "high_latency": 10,       # ms (device dependent)
-    "high_queue": 1,          # avg queue depth
-    "high_psi": 0.1           # avg10 stall %
+    "high_util": 70,
+    "high_iowait": 10,
+    "high_latency": 10,
+    "high_queue": 1,
+    "high_psi": 0.1
 }
 
 # -----------------------------------------
@@ -20,69 +20,32 @@ def classify_disk(features):
     reasons = []
     score = 0
 
-    # Utilization
     if features.get("avg_util", 0) > THRESHOLDS["high_util"]:
         reasons.append("High disk utilization")
         score += 1
 
-    # I/O wait
     if features.get("avg_iowait", 0) > THRESHOLDS["high_iowait"]:
-        reasons.append("High CPU iowait (CPU blocked on disk)")
+        reasons.append("High CPU iowait")
         score += 1
 
-    # Latency
     if features.get("avg_await", 0) > THRESHOLDS["high_latency"]:
         reasons.append("High disk latency")
         score += 1
 
-    # Queue saturation
     if features.get("avg_queue", 0) > THRESHOLDS["high_queue"]:
-        reasons.append("High disk queue (saturation)")
+        reasons.append("High disk queue")
         score += 1
 
-    # PSI pressure
     if features.get("psi_some_avg10", 0) > THRESHOLDS["high_psi"]:
-        reasons.append("I/O pressure (tasks stalled on disk)")
+        reasons.append("I/O pressure (PSI)")
         score += 1
 
-    # -------------------------------------
-    # Final Decision
-    # -------------------------------------
     if score >= 2:
         classification = "DISK-BOUND"
     else:
         classification = "NOT DISK-BOUND"
 
     return classification, reasons, score
-
-
-# -----------------------------------------
-# Interpretation Layer
-# -----------------------------------------
-def explain(features, classification, reasons):
-    explanation = []
-
-    explanation.append(f"Classification: {classification}")
-
-    if reasons:
-        explanation.append("\nReasons:")
-        for r in reasons:
-            explanation.append(f"- {r}")
-
-    # Additional insight
-    if "top_io_process" in features:
-        explanation.append("\nTop I/O Process:")
-        explanation.append(
-            f"- {features['top_io_process']} ({round(features.get('top_io_kB',0),2)} kB)"
-        )
-
-    # Latency insight
-    if "avg_r_await" in features and "avg_w_await" in features:
-        explanation.append("\nLatency Breakdown:")
-        explanation.append(f"- Read latency : {round(features['avg_r_await'],2)} ms")
-        explanation.append(f"- Write latency: {round(features['avg_w_await'],2)} ms")
-
-    return "\n".join(explanation)
 
 
 # -----------------------------------------
@@ -100,17 +63,25 @@ def main():
     print(" Disk Bottleneck Classification")
     print("==============================\n")
 
-    print(explain(features, classification, reasons))
+    print("Classification:", classification)
+
+    if reasons:
+        print("\nReasons:")
+        for r in reasons:
+            print("-", r)
+
+    if "top_io_process" in features:
+        print("\nTop I/O Process:")
+        print("-", features["top_io_process"], f"({round(features.get('top_io_kB',0),2)} kB)")
 
     print("\nConfidence Score:", score, "/ 5")
 
-    # Optional: suggest tuning
     if classification == "DISK-BOUND":
         print("\nSuggested Actions:")
-        print("- Tune I/O scheduler (mq-deadline / none for NVMe)")
-        print("- Increase read-ahead (if sequential workload)")
-        print("- Reduce random I/O or batch operations")
-        print("- Check caching / application I/O patterns")
+        print("- Tune I/O scheduler")
+        print("- Increase read-ahead (if sequential)")
+        print("- Reduce random I/O")
+        print("- Check caching")
 
 
 if __name__ == "__main__":
