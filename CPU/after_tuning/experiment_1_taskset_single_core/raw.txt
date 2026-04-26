@@ -1,4 +1,0 @@
-# Tuning Experiment 1 — 2026-04-25 17:18:02
-# label=taskset_single_core
-# intensity=1  duration=80000s  runs=5
-# run_id | elapsed_s | cpu_avg_%

@@ -1,0 +1,75 @@
+======================================================================
+  CPU PERFORMANCE TUNING — FINAL EXPERIMENT REPORT
+======================================================================
+
+=== Environment Snapshot ===
+Date      : Sun 26 Apr 2026 02:56:31 PM IST
+Kernel    : 7.0.0-14-generic
+CPU       : Intel(R) Core(TM) Ultra 5 125H
+Cores     : 18
+Governor  : powersave
+Runs      : 15
+Threads   : 2
+============================
+
+── RAW STATISTICS ──────────────────────────────────────────────────────
+
+  State A  (clean baseline, no contention)
+    n                    : 15
+    wall_time  mean      : 1.7900 s
+    wall_time  stdev     : 0.1176 s
+    wall_time  stderr    : 0.0304 s
+    wall_time  [min,max] : [1.6500, 2.0800] s
+    migrations mean      : 4.80
+    migrations stdev     : 2.40
+
+  State B  (synthetic contention, same CPUs — the problem)
+    n                    : 15
+    wall_time  mean      : 2.5133 s
+    wall_time  stdev     : 0.0625 s
+    wall_time  stderr    : 0.0161 s
+    wall_time  [min,max] : [2.3100, 2.5700] s
+    migrations mean      : 3.53
+    migrations stdev     : 2.75
+
+  State C1 (affinity split only — Tuning 1)
+    n                    : 15
+    wall_time  mean      : 1.8233 s
+    wall_time  stdev     : 0.0123 s
+    wall_time  stderr    : 0.0032 s
+    wall_time  [min,max] : [1.8000, 1.8500] s
+    migrations mean      : 1.00
+    migrations stdev     : 0.00
+
+  State C2 (affinity split + RT scheduling — Tuning 2)
+    [NO DATA]
+
+── COMPARISONS ─────────────────────────────────────────────────────────
+
+  Reference state: B (contention, no tuning)
+
+  [Tuning 1] Affinity Split  (C1 vs B):
+    wall_time improvement : +27.45%  (2.5133s → 1.8233s)
+    migration reduction   : +71.70%  (3.53 → 1.00)
+    Welch t-stat          : 41.9305  (df=15.1)
+    Interpretation        : SIGNIFICANT (|t|>2)
+
+
+  [Tuning 2] Affinity Split + RT Sched  (C2 vs B)
+    [SKIPPED — no data]
+
+
+── CONCLUSION ───────────────────────────────────────────────────────
+
+  Claim (what this experiment proves):
+    Under controlled conditions (same workload, same input, same
+    hardware, minimal background load), CPU affinity splitting
+    reduces wall-clock execution time and CPU migrations when
+    two competing processes are pinned to separate physical cores
+    instead of competing on the same CPU set.
+
+  Claim scope (what this does NOT prove):
+    These results are specific to this machine, this kernel, and
+    this workload. No universal guarantee is made.
+
+======================================================================
