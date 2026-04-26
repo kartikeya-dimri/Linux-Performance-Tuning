@@ -1,17 +1,17 @@
 {
     "avg_si_kBps": 0.0,
-    "avg_so_kBps": 2.0,
-    "avg_free_vmstat_MB": 4808.4736328125,
-    "avg_iowait": 0.0,
-    "avg_free_mb": 4807.8046875,
-    "avg_swap_used_mb": 167.4296875,
-    "avg_available_mb": 4535.49609375,
-    "avg_cache_mb": 274.31640625,
-    "avg_pgfault": 3967.3333333333335,
-    "avg_pgmajfault": 9.333333333333334,
+    "avg_so_kBps": 27234.13829787234,
+    "avg_free_vmstat_MB": 3347.06756981383,
+    "avg_iowait": 1.851063829787234,
+    "avg_free_mb": 3343.6079313858695,
+    "avg_swap_used_mb": 220.6877972146739,
+    "avg_available_mb": 3079.096000339674,
+    "avg_cache_mb": 304.73679517663044,
+    "avg_pgfault": 22500.43956043956,
+    "avg_pgmajfault": 0.6703296703296703,
     "avg_pswpin": 0.0,
-    "avg_pswpout": 0.0,
+    "avg_pswpout": 7032.9670329670325,
     "psi_some_avg10": 0.0,
     "psi_full_avg10": 0.0,
-    "memory_pressure_score": 0.1870666666666667
+    "memory_pressure_score": 5.5527874444704235
 }
