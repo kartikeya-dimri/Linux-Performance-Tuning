@@ -39,30 +39,29 @@ case $WORKLOAD in
         ;;
 
     # -----------------------------------------
-    # CACHE: Continuous steady-state page cache pressure
+    # CACHE: same proven approach as alloc, different access pattern.
     #
-    # KEY FIX: --vm-keep prevents stress-ng from FREE-ing and
-    # RE-ALLOCATING between cycles. Without it, workers alternate
-    # between "touching" (high pressure) and "freeing" (zero pressure),
-    # making vmstat median=0 even though mean is high.
+    # WHY alloc worked:
+    #   4 × 2500MB = 10GB > 8GB RAM → 2GB excess → workers CONTINUOUSLY
+    #   cycle through all pages via walk-1d → every second, some pages
+    #   must be swapped in/out → vmstat median is non-zero, stats significant.
     #
-    # --vm-keep: 4 workers hold 2200MB EACH for the full 90s.
-    # Total resident = 4 × 2200MB = 8.8GB > 8GB RAM
-    # → kernel MUST continuously swap pages, non-stop for 90s
-    # → vmstat median is non-zero, stats are significant
+    # WHY --vm-keep FAILED: workers held allocation but barely re-accessed
+    #   pages → no active demand → swap didn't happen → median stayed 0.
     #
-    # --vm-method rand-set: random access pattern (cache-miss heavy)
-    # This simulates page-cache thrashing behaviour specifically.
+    # CACHE DIFFERENTIATION: same 4×2500MB pressure, but --vm-method rand-set
+    #   (random page access pattern) vs alloc's walk-1d (sequential).
+    #   rand-set simulates cache-thrash: unpredictable access breaks
+    #   hardware prefetcher, exercises the kernel's LRU list more randomly.
     #
-    # Bad config: swappiness=200 → constant scan-and-evict loop
-    # Good config: swappiness=10 → smarter eviction, less churn
+    # Bad config: swappiness=200 → kernel constantly evicts pages it needs
+    # Good config: swappiness=10 → kernel protects recently-accessed pages
     # -----------------------------------------
     cache)
-        echo "[+] Running --vm-keep continuous pressure (8.8 GB resident, 90s)..."
+        echo "[+] Running cache-pattern pressure (4×2500MB rand-set, 10GB > 8GB)..."
         stress-ng --vm 4 \
-                  --vm-bytes 2200M \
+                  --vm-bytes 2500M \
                   --vm-method rand-set \
-                  --vm-keep \
                   --metrics-brief \
                   --timeout ${RUNTIME}s \
                   2>&1 | tee "$STRESS_LOG"
