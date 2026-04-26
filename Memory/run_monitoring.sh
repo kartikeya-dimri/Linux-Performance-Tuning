@@ -61,8 +61,8 @@ PID_PSI=$!
 # Let monitors warm up
 sleep 3
 
-echo "[+] Running workload (with cgroup RAM cap)..."
-# Pass OUTPUT_DIR so stress-ng log goes into the right place
+echo "[+] Running workload (10 GB allocation > 8 GB RAM = forced swap)..."
+# Pass OUTPUT_DIR so stress-ng log goes into the run_before/ or run_after/ dir
 ./run_workload.sh $WORKLOAD $OUTPUT_DIR
 
 echo "[+] Stopping monitoring..."

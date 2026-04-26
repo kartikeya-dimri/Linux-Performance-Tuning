@@ -51,7 +51,7 @@ echo ""
 # ============================================================
 # STEP 3 — Run baseline workload + monitoring (90s)
 # ============================================================
-echo "[STEP 3/7] Running BASELINE workload ($WORKLOAD, 90s) inside 4GB cgroup..."
+echo "[STEP 3/7] Running BASELINE workload ($WORKLOAD, 90s) — 10 GB alloc > 8 GB RAM..."
 echo "           Logs → run_before/"
 ./run_monitoring.sh $WORKLOAD run_before
 echo "[STEP 3/7] Baseline workload done."
@@ -86,7 +86,7 @@ echo ""
 echo "[STEP 6/7] Resetting system state before tuned run..."
 ./reset_system.sh
 
-echo "[STEP 6/7] Running TUNED workload ($WORKLOAD, 90s) inside 4GB cgroup..."
+echo "[STEP 6/7] Running TUNED workload ($WORKLOAD, 90s) — 10 GB alloc > 8 GB RAM..."
 echo "           Logs → run_after/"
 ./run_monitoring.sh $WORKLOAD run_after
 echo run_after | python3 mem_features_full.py
