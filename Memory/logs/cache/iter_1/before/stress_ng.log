@@ -1,11 +1,11 @@
-stress-ng: info:  [292136] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [292136] dispatching hogs: 4 vm
-stress-ng: info:  [292136] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [292136] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [292136]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [292136] vm             15523609     90.04    237.08     59.52    172405.55       52338.43
-stress-ng: info:  [292136] skipped: 0
-stress-ng: info:  [292136] passed: 4: vm (4)
-stress-ng: info:  [292136] failed: 0
-stress-ng: info:  [292136] metrics untrustworthy: 0
-stress-ng: info:  [292136] successful run completed in 1 min, 30.06 secs
+stress-ng: info:  [303782] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [303782] dispatching hogs: 4 vm
+stress-ng: info:  [303782] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [303782] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [303782]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [303782] vm             14626889     90.20    225.96     66.37    162161.91       50035.04
+stress-ng: info:  [303782] skipped: 0
+stress-ng: info:  [303782] passed: 4: vm (4)
+stress-ng: info:  [303782] failed: 0
+stress-ng: info:  [303782] metrics untrustworthy: 0
+stress-ng: info:  [303782] successful run completed in 1 min, 30.66 secs
