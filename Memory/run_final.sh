@@ -16,7 +16,16 @@
 # ============================================================
 
 N=${1:-5}
-WORKLOADS=("alloc" "cache")
+
+# Optional: pass a specific workload as $2 to run only that one.
+# Example:  ./run_final.sh 5 alloc   (only alloc, 5 iters)
+#           ./run_final.sh 5 cache   (only cache, 5 iters, separate invocation = fresh state)
+#           ./run_final.sh 5         (both, back-to-back)
+if [ -n "$2" ]; then
+    WORKLOADS=("$2")
+else
+    WORKLOADS=("alloc" "cache")
+fi
 
 echo ""
 echo "========================================================"
