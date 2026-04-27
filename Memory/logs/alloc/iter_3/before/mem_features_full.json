@@ -1,0 +1,18 @@
+{
+    "avg_si_kBps": 0.0,
+    "avg_so_kBps": 36832.68041237113,
+    "avg_free_vmstat_MB": 3479.352569265464,
+    "avg_iowait": 5.77319587628866,
+    "avg_free_mb": 3488.683470394737,
+    "avg_swap_used_mb": 256.6840871710526,
+    "avg_available_mb": 3678.8312088815787,
+    "avg_cache_mb": 301.34375,
+    "avg_pgfault": 206192.8085106383,
+    "avg_pgmajfault": 0.5,
+    "avg_pswpin": 0.0,
+    "avg_pswpout": 9501.968085106382,
+    "psi_some_avg10": 0.0,
+    "psi_full_avg10": 0.0,
+    "bogo_ops_per_s": 194896.46,
+    "memory_pressure_score": 15.58599522044308
+}

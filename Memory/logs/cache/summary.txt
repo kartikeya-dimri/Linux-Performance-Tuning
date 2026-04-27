@@ -1,0 +1,9 @@
+Workload: cache | Iterations: 5
+Metric                             Baseline        Tuned     Change  Better?
+--------------------------------------------------------------------------
+bogo ops/s                         49917.13     39062.84 -21.7%         [!!]
+CPU iowait (%)                        17.79        27.52 +54.6%         [!!]
+Page Faults/s                     223110.11     12317.41 -94.5%         [OK]
+Swap-Out (KB/s)                    34630.59     35280.27 +1.9%         [!!]
+Swap Used (MB)                       591.61       929.81 +57.2%         [!!]
+Pressure Score                        18.18        17.65 -3.0%         [OK]
