@@ -238,22 +238,24 @@ def compute_features(vmstat_df, meminfo_df, proc_vmstat_deltas, psi_data, stress
     features.update(stress_data)
 
     # --- Derived composite memory pressure score ---
-    # Weights: swap-out (dominant signal here), iowait (92% improvement!),
-    # pgfault rate, PSI when available
-    so_norm     = min(features.get("avg_so_kBps", 0) / 1000.0, 100)
-    si_norm     = min(features.get("avg_si_kBps", 0) / 1000.0, 100)
-    iowait      = features.get("avg_iowait", 0)
+    # so_norm (avg_so_kBps) is intentionally EXCLUDED:
+    #   With swappiness=10, eviction happens in bursts → higher instantaneous
+    #   SO rate even though the system performs BETTER (fewer page faults).
+    #   Using SO rate would make a better config appear worse.
+    # Weights: iowait (dominant — CPU time lost to swap I/O), pgfault (direct
+    # measure of swap-in demand), si_kBps (actual swap reads), PSI when available.
+    si_norm      = min(features.get("avg_si_kBps", 0) / 1000.0, 100)
+    iowait       = features.get("avg_iowait", 0)
     pgfault_norm = min(features.get("avg_pgfault", 0) / 10000.0, 100)
-    psi_full    = features.get("psi_full_avg10", 0)
-    psi_some    = features.get("psi_some_avg10", 0)
+    psi_full     = features.get("psi_full_avg10", 0)
+    psi_some     = features.get("psi_some_avg10", 0)
 
     features["memory_pressure_score"] = (
-        so_norm       * 0.30 +
-        si_norm       * 0.20 +
-        iowait        * 0.25 +
-        pgfault_norm  * 0.15 +
-        psi_full      * 0.05 +
-        psi_some      * 0.05
+        iowait        * 0.50 +
+        pgfault_norm  * 0.35 +
+        si_norm       * 0.10 +
+        psi_full      * 0.03 +
+        psi_some      * 0.02
     )
 
     return features
