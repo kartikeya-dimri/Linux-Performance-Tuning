@@ -58,10 +58,10 @@ case $WORKLOAD in
     # data pattern, same sequential page access order).
     # -----------------------------------------
     cache)
-        echo "[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)..."
+        echo "[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)..."
         stress-ng --vm 4 \
                   --vm-bytes 2500M \
-                  --vm-method ror \
+                  --vm-method walk-1d \
                   --metrics-brief \
                   --timeout ${RUNTIME}s \
                   2>&1 | tee "$STRESS_LOG"

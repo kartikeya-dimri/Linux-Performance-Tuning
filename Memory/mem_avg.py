@@ -26,8 +26,7 @@ KEY_METRICS = [
     ("bogo_ops_per_s",       "bogo ops/s",          False),   # higher=better
     ("avg_iowait",           "CPU iowait (%)",       True),    # lower=better
     ("avg_pgfault",          "Page Faults/s",        True),
-    ("avg_so_kBps",          "Swap-Out (KB/s)",      True),
-    ("avg_swap_used_mb",     "Swap Used (MB)",       True),
+    ("avg_si_kBps",          "Swap-In (KB/s)",       True),
     ("memory_pressure_score","Pressure Score",       True),
 ]
 

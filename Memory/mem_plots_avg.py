@@ -35,8 +35,6 @@ metrics = [
     ("bogo_ops_per_s",        "stress-ng Throughput (bogo ops/s)",  False),
     ("avg_iowait",            "CPU iowait - waiting on swap (%)",   True),
     ("avg_pgfault",           "Page Faults per Second",             True),
-    ("avg_so_kBps",           "Swap-Out Rate (KB/s)",               True),
-    ("avg_swap_used_mb",      "Avg Swap Used (MB)",                 True),
     ("avg_si_kBps",           "Swap-In Rate (KB/s)",                True),
     ("memory_pressure_score", "Memory Pressure Score (composite)",  True),
 ]

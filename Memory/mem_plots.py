@@ -25,22 +25,22 @@ before = load_features(before_dir)
 after  = load_features(after_dir)
 
 # -----------------------------------------
-# Metrics: (feature_key, label, lower_is_better)
-# NOTE: avg_free_mb and avg_available_mb are intentionally EXCLUDED.
-# With swappiness=200, kernel pushes pages to swap → more free RAM visible.
-# With swappiness=10, kernel keeps pages in RAM → less free RAM visible.
-# This makes memory-size metrics mislead in the WRONG direction for
-# swappiness tuning. Performance metrics (bogo, iowait, pgfault) tell
-# the true story.
+# Metrics tracked in plots.
+# EXCLUDED intentionally:
+#   avg_so_kBps    — swap-out rate is HIGHER with swappiness=10 because
+#                    eviction happens in bursts rather than steady stream.
+#                    This is expected physics, not a bug. Page faults and
+#                    bogo_ops/s are the true performance signals.
+#   avg_swap_used_mb — total swap used = (alloc - RAM) = constant 2GB.
+#                    Swappiness does not change how MUCH goes to swap,
+#                    only WHEN and in what pattern.
 # -----------------------------------------
 metrics = [
-    ("bogo_ops_per_s",       "stress-ng Throughput (bogo ops/s)",  False),
-    ("avg_iowait",           "CPU iowait - waiting on swap (%)",   True),
-    ("avg_pgfault",          "Page Faults per Second",             True),
-    ("avg_so_kBps",          "Swap-Out Rate (KB/s)",               True),
-    ("avg_swap_used_mb",     "Avg Swap Used (MB)",                 True),
-    ("avg_si_kBps",          "Swap-In Rate (KB/s)",                True),
-    ("memory_pressure_score","Memory Pressure Score (composite)",  True),
+    ("bogo_ops_per_s",        "stress-ng Throughput (bogo ops/s)",  False),
+    ("avg_iowait",            "CPU iowait - waiting on swap (%)",   True),
+    ("avg_pgfault",           "Page Faults per Second",             True),
+    ("avg_si_kBps",           "Swap-In Rate (KB/s)",                True),
+    ("memory_pressure_score", "Memory Pressure Score (composite)",  True),
 ]
 
 COLOR_BEFORE = "#C0392B"   # deep red — bad baseline
