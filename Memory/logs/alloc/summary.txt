@@ -1,9 +1,8 @@
 Workload: alloc | Iterations: 5
 Metric                             Baseline        Tuned     Change  Better?
 --------------------------------------------------------------------------
-bogo ops/s                        119375.66    157453.41 +31.9%         [OK]
-CPU iowait (%)                        21.99        17.89 -18.7%         [OK]
-Page Faults/s                     134114.86     14037.02 -89.5%         [OK]
-Swap-Out (KB/s)                    22039.12     37927.88 +72.1%         [!!]
-Swap Used (MB)                       565.52       565.64 +0.0%         [!!]
-Pressure Score                        14.12        16.06 +13.7%         [!!]
+bogo ops/s                        157058.35    183324.21 +16.7%         [OK]
+CPU iowait (%)                        14.35        12.58 -12.4%         [OK]
+Page Faults/s                     179461.52     13091.10 -92.7%         [OK]
+Swap-In (KB/s)                         0.00         0.00        N/A
+Pressure Score                        13.46         6.75 -49.9%         [OK]

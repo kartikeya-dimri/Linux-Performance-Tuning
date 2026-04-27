@@ -31,55 +31,55 @@
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_1/before)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [260898] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [260898] dispatching hogs: 4 vm
-stress-ng: info:  [260898] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [260898] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [260898]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [260898] vm              9600000     94.73     22.06      7.14    101344.78      328854.91
-stress-ng: info:  [260898] skipped: 0
-stress-ng: info:  [260898] passed: 4: vm (4)
-stress-ng: info:  [260898] failed: 0
-stress-ng: info:  [260898] metrics untrustworthy: 0
-stress-ng: info:  [260898] successful run completed in 1 min, 35.17 secs
+stress-ng: info:  [281947] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [281947] dispatching hogs: 4 vm
+stress-ng: info:  [281947] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [281947] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [281947]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [281947] vm             15262826     90.26    230.59     56.52    169102.70       53160.33
+stress-ng: info:  [281947] skipped: 0
+stress-ng: info:  [281947] passed: 4: vm (4)
+stress-ng: info:  [281947] failed: 0
+stress-ng: info:  [281947] metrics untrustworthy: 0
+stress-ng: info:  [281947] successful run completed in 1 min, 30.87 secs
 [+] Workload completed. Metrics: logs/alloc/iter_1/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_1/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 96
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 106064.93, 'avg_pgmajfault': 0.47, 'avg_pswpin': 0.0, 'avg_pswpout': 2842.42}
-[DEBUG] stress-ng stressor bogo ops/s: 101344.78
-[DEBUG] stress-ng total bogo ops/s: 101344.78
+[DEBUG] meminfo snapshots: 80
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 217098.04, 'avg_pgmajfault': 0.59, 'avg_pswpin': 0.0, 'avg_pswpout': 8101.27}
+[DEBUG] stress-ng stressor bogo ops/s: 169102.70
+[DEBUG] stress-ng total bogo ops/s: 169102.70
 
 [+] Features extracted and saved to logs/alloc/iter_1/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          11135.536
-  avg_free_vmstat_MB                    2960.604
-  avg_iowait                              25.866
-  avg_free_mb                           2959.498
-  avg_swap_used_mb                       590.318
-  avg_available_mb                      3150.062
-  avg_cache_mb                           300.711
-  avg_pgfault                         106064.926
-  avg_pgmajfault                           0.474
+  avg_so_kBps                          31930.275
+  avg_free_vmstat_MB                    3622.141
+  avg_iowait                              13.012
+  avg_free_mb                           3613.187
+  avg_swap_used_mb                        514.61
+  avg_available_mb                      3825.016
+  avg_cache_mb                           322.504
+  avg_pgfault                         217098.038
+  avg_pgmajfault                           0.595
   avg_pswpin                                 0.0
-  avg_pswpout                           2842.421
+  avg_pswpout                           8101.266
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       101344.78
-  memory_pressure_score                   11.398
+  bogo_ops_per_s                        169102.7
+  memory_pressure_score                   14.105
 [B] Baseline done. Features: logs/alloc/iter_1/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 101344.78
-Reason                 : High swap activity: si+so = 11135.5 KB/s
+Baseline bogo ops/s    : 169102.70
+Reason                 : High swap activity: si+so = 31930.3 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -113,7 +113,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 11135.5 KB/s
+  - High swap activity: si+so = 31930.3 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -134,47 +134,47 @@ Parameter                           Bad Baseline    Tuned
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_1/after)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [262048] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [262048] dispatching hogs: 4 vm
-stress-ng: info:  [262048] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [262048] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [262048]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [262048] vm             12973657     93.88     83.88      6.61    138188.14      143382.97
-stress-ng: info:  [262048] skipped: 0
-stress-ng: info:  [262048] passed: 4: vm (4)
-stress-ng: info:  [262048] failed: 0
-stress-ng: info:  [262048] metrics untrustworthy: 0
-stress-ng: info:  [262048] successful run completed in 1 min, 35.27 secs
+stress-ng: info:  [282894] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [282894] dispatching hogs: 4 vm
+stress-ng: info:  [282894] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [282894] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [282894]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [282894] vm             19585906     90.13    294.51     27.76    217315.45       60774.93
+stress-ng: info:  [282894] skipped: 0
+stress-ng: info:  [282894] passed: 4: vm (4)
+stress-ng: info:  [282894] failed: 0
+stress-ng: info:  [282894] metrics untrustworthy: 0
+stress-ng: info:  [282894] successful run completed in 1 min, 30.50 secs
 [+] Workload completed. Metrics: logs/alloc/iter_1/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_1/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 91
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 15030.5, 'avg_pgmajfault': 0.94, 'avg_pswpin': 0.0, 'avg_pswpout': 2717.0}
-[DEBUG] stress-ng stressor bogo ops/s: 138188.14
-[DEBUG] stress-ng total bogo ops/s: 138188.14
+[DEBUG] meminfo snapshots: 87
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 19823.08, 'avg_pgmajfault': 0.56, 'avg_pswpin': 0.0, 'avg_pswpout': 14883.72}
+[DEBUG] stress-ng stressor bogo ops/s: 217315.45
+[DEBUG] stress-ng total bogo ops/s: 217315.45
 
 [+] Features extracted and saved to logs/alloc/iter_1/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          10636.728
-  avg_free_vmstat_MB                    3117.231
-  avg_iowait                              24.391
-  avg_free_mb                           3115.182
-  avg_swap_used_mb                       523.767
-  avg_available_mb                      2849.991
-  avg_cache_mb                           301.267
-  avg_pgfault                            15030.5
-  avg_pgmajfault                           0.944
+  avg_so_kBps                          61219.125
+  avg_free_vmstat_MB                    3713.205
+  avg_iowait                               5.102
+  avg_free_mb                           3701.141
+  avg_swap_used_mb                       383.397
+  avg_available_mb                      3443.115
+  avg_cache_mb                           315.545
+  avg_pgfault                          19823.081
+  avg_pgmajfault                           0.558
   avg_pswpin                                 0.0
-  avg_pswpout                             2717.0
+  avg_pswpout                          14883.721
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       138188.14
-  memory_pressure_score                    9.514
+  bogo_ops_per_s                       217315.45
+  memory_pressure_score                    3.245
 [D] Tuned done. Features: logs/alloc/iter_1/after/mem_features_full.json
 [✓] Iteration 1 complete for alloc
 
@@ -198,55 +198,55 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_2/before)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [263076] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [263076] dispatching hogs: 4 vm
-stress-ng: info:  [263076] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [263076] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [263076]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [263076] vm              9251519     93.87     74.21     16.23     98553.02      102303.53
-stress-ng: info:  [263076] skipped: 0
-stress-ng: info:  [263076] passed: 4: vm (4)
-stress-ng: info:  [263076] failed: 0
-stress-ng: info:  [263076] metrics untrustworthy: 0
-stress-ng: info:  [263076] successful run completed in 1 min, 35.22 secs
+stress-ng: info:  [283897] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [283897] dispatching hogs: 4 vm
+stress-ng: info:  [283897] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [283897] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [283897]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [283897] vm             18357370     93.86     74.55     15.82    195589.61      203144.50
+stress-ng: info:  [283897] skipped: 0
+stress-ng: info:  [283897] passed: 4: vm (4)
+stress-ng: info:  [283897] failed: 0
+stress-ng: info:  [283897] metrics untrustworthy: 0
+stress-ng: info:  [283897] successful run completed in 1 min, 35.23 secs
 [+] Workload completed. Metrics: logs/alloc/iter_2/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_2/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 89
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 110523.7, 'avg_pgmajfault': 0.49, 'avg_pswpin': 0.0, 'avg_pswpout': 2083.58}
-[DEBUG] stress-ng stressor bogo ops/s: 98553.02
-[DEBUG] stress-ng total bogo ops/s: 98553.02
+[DEBUG] meminfo snapshots: 96
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 205695.26, 'avg_pgmajfault': 0.75, 'avg_pswpin': 0.0, 'avg_pswpout': 9936.72}
+[DEBUG] stress-ng stressor bogo ops/s: 195589.61
+[DEBUG] stress-ng total bogo ops/s: 195589.61
 
 [+] Features extracted and saved to logs/alloc/iter_2/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                           7594.409
-  avg_free_vmstat_MB                     2960.18
-  avg_iowait                              24.656
-  avg_free_mb                           2967.012
-  avg_swap_used_mb                       475.238
-  avg_available_mb                      3156.621
-  avg_cache_mb                           300.539
-  avg_pgfault                         110523.705
-  avg_pgmajfault                           0.489
+  avg_so_kBps                          40170.319
+  avg_free_vmstat_MB                    3764.034
+  avg_iowait                                5.17
+  avg_free_mb                           3856.209
+  avg_swap_used_mb                       317.283
+  avg_available_mb                      4061.975
+  avg_cache_mb                            316.71
+  avg_pgfault                         205695.263
+  avg_pgmajfault                           0.747
   avg_pswpin                                 0.0
-  avg_pswpout                            2083.58
+  avg_pswpout                           9936.716
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        98553.02
-  memory_pressure_score                     10.1
+  bogo_ops_per_s                       195589.61
+  memory_pressure_score                    9.784
 [B] Baseline done. Features: logs/alloc/iter_2/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 98553.02
-Reason                 : High swap activity: si+so = 7594.4 KB/s
+Baseline bogo ops/s    : 195589.61
+Reason                 : High swap activity: si+so = 40170.3 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -280,7 +280,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 7594.4 KB/s
+  - High swap activity: si+so = 40170.3 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -301,47 +301,47 @@ Parameter                           Bad Baseline    Tuned
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_2/after)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [264100] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [264100] dispatching hogs: 4 vm
-stress-ng: info:  [264100] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [264100] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [264100]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [264100] vm             11780658     91.31    128.14     14.04    129025.03       82860.46
-stress-ng: info:  [264100] skipped: 0
-stress-ng: info:  [264100] passed: 4: vm (4)
-stress-ng: info:  [264100] failed: 0
-stress-ng: info:  [264100] metrics untrustworthy: 0
-stress-ng: info:  [264100] successful run completed in 1 min, 35.22 secs
+stress-ng: info:  [285034] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [285034] dispatching hogs: 4 vm
+stress-ng: info:  [285034] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [285034] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [285034]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [285034] vm             19821078     91.24    213.92     19.27    217241.82       85000.00
+stress-ng: info:  [285034] skipped: 0
+stress-ng: info:  [285034] passed: 4: vm (4)
+stress-ng: info:  [285034] failed: 0
+stress-ng: info:  [285034] metrics untrustworthy: 0
+stress-ng: info:  [285034] successful run completed in 1 min, 34.91 secs
 [+] Workload completed. Metrics: logs/alloc/iter_2/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_2/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 96
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 14443.99, 'avg_pgmajfault': 0.86, 'avg_pswpin': 0.0, 'avg_pswpout': 10063.49}
-[DEBUG] stress-ng stressor bogo ops/s: 129025.03
-[DEBUG] stress-ng total bogo ops/s: 129025.03
+[DEBUG] meminfo snapshots: 88
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 12314.8, 'avg_pgmajfault': 0.56, 'avg_pswpin': 0.0, 'avg_pswpout': 14712.64}
+[DEBUG] stress-ng stressor bogo ops/s: 217241.82
+[DEBUG] stress-ng total bogo ops/s: 217241.82
 
 [+] Features extracted and saved to logs/alloc/iter_2/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                            39022.0
-  avg_free_vmstat_MB                    3055.669
-  avg_iowait                              21.449
-  avg_free_mb                           3074.031
-  avg_swap_used_mb                       676.597
-  avg_available_mb                      2810.331
-  avg_cache_mb                           304.329
-  avg_pgfault                          14443.989
-  avg_pgmajfault                           0.863
+  avg_so_kBps                          56889.556
+  avg_free_vmstat_MB                    3890.891
+  avg_iowait                                 6.7
+  avg_free_mb                           3866.555
+  avg_swap_used_mb                        356.16
+  avg_available_mb                      3606.607
+  avg_cache_mb                           311.609
+  avg_pgfault                          12314.805
+  avg_pgmajfault                           0.563
   avg_pswpin                                 0.0
-  avg_pswpout                          10063.495
+  avg_pswpout                          14712.644
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       129025.03
-  memory_pressure_score                   17.286
+  bogo_ops_per_s                       217241.82
+  memory_pressure_score                    3.781
 [D] Tuned done. Features: logs/alloc/iter_2/after/mem_features_full.json
 [✓] Iteration 2 complete for alloc
 
@@ -365,55 +365,55 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_3/before)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [265264] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [265264] dispatching hogs: 4 vm
-stress-ng: info:  [265264] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [265264] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [265264]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [265264] vm             17796709     91.31    199.24     49.10    194896.46       71662.97
-stress-ng: info:  [265264] skipped: 0
-stress-ng: info:  [265264] passed: 4: vm (4)
-stress-ng: info:  [265264] failed: 0
-stress-ng: info:  [265264] metrics untrustworthy: 0
-stress-ng: info:  [265264] successful run completed in 1 min, 35.16 secs
+stress-ng: info:  [286003] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [286003] dispatching hogs: 4 vm
+stress-ng: info:  [286003] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [286003] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [286003]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [286003] vm             18362320     90.05    282.96     65.75    203903.35       52657.67
+stress-ng: info:  [286003] skipped: 0
+stress-ng: info:  [286003] passed: 4: vm (4)
+stress-ng: info:  [286003] failed: 0
+stress-ng: info:  [286003] metrics untrustworthy: 0
+stress-ng: info:  [286003] successful run completed in 1 min, 30.08 secs
 [+] Workload completed. Metrics: logs/alloc/iter_3/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_3/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 95
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 206192.81, 'avg_pgmajfault': 0.5, 'avg_pswpin': 0.0, 'avg_pswpout': 9501.97}
-[DEBUG] stress-ng stressor bogo ops/s: 194896.46
-[DEBUG] stress-ng total bogo ops/s: 194896.46
+[DEBUG] meminfo snapshots: 93
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 211045.18, 'avg_pgmajfault': 0.61, 'avg_pswpin': 0.0, 'avg_pswpout': 12173.91}
+[DEBUG] stress-ng stressor bogo ops/s: 203903.35
+[DEBUG] stress-ng total bogo ops/s: 203903.35
 
 [+] Features extracted and saved to logs/alloc/iter_3/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                           36832.68
-  avg_free_vmstat_MB                    3479.353
-  avg_iowait                               5.773
-  avg_free_mb                           3488.683
-  avg_swap_used_mb                       256.684
-  avg_available_mb                      3678.831
-  avg_cache_mb                           301.344
-  avg_pgfault                         206192.809
-  avg_pgmajfault                             0.5
+  avg_so_kBps                          47660.234
+  avg_free_vmstat_MB                    3884.661
+  avg_iowait                               1.968
+  avg_free_mb                           3905.062
+  avg_swap_used_mb                       317.209
+  avg_available_mb                      4106.017
+  avg_cache_mb                           311.854
+  avg_pgfault                         211045.185
+  avg_pgmajfault                           0.609
   avg_pswpin                                 0.0
-  avg_pswpout                           9501.968
+  avg_pswpout                          12173.913
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       194896.46
-  memory_pressure_score                   15.586
+  bogo_ops_per_s                       203903.35
+  memory_pressure_score                    8.371
 [B] Baseline done. Features: logs/alloc/iter_3/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 194896.46
-Reason                 : High swap activity: si+so = 36832.7 KB/s
+Baseline bogo ops/s    : 203903.35
+Reason                 : High swap activity: si+so = 47660.2 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -447,7 +447,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 36832.7 KB/s
+  - High swap activity: si+so = 47660.2 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -468,47 +468,47 @@ Parameter                           Bad Baseline    Tuned
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_3/after)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [266319] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [266319] dispatching hogs: 4 vm
-stress-ng: info:  [266319] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [266319] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [266319]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [266319] vm             13823665     90.00    203.96     12.52    153592.56       63855.61
-stress-ng: info:  [266319] skipped: 0
-stress-ng: info:  [266319] passed: 4: vm (4)
-stress-ng: info:  [266319] failed: 0
-stress-ng: info:  [266319] metrics untrustworthy: 0
-stress-ng: info:  [266319] successful run completed in 1 min, 30.01 secs
+stress-ng: info:  [287039] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [287039] dispatching hogs: 4 vm
+stress-ng: info:  [287039] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [287039] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [287039]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [287039] vm             19564924     93.79     85.74      4.42    208599.72      216998.68
+stress-ng: info:  [287039] skipped: 0
+stress-ng: info:  [287039] passed: 4: vm (4)
+stress-ng: info:  [287039] failed: 0
+stress-ng: info:  [287039] metrics untrustworthy: 0
+stress-ng: info:  [287039] successful run completed in 1 min, 35.13 secs
 [+] Workload completed. Metrics: logs/alloc/iter_3/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_3/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 72
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 9862.56, 'avg_pgmajfault': 1.03, 'avg_pswpin': 0.0, 'avg_pswpout': 4507.04}
-[DEBUG] stress-ng stressor bogo ops/s: 153592.56
-[DEBUG] stress-ng total bogo ops/s: 153592.56
+[DEBUG] meminfo snapshots: 88
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 14676.94, 'avg_pgmajfault': 2.61, 'avg_pswpin': 0.0, 'avg_pswpout': 954.99}
+[DEBUG] stress-ng stressor bogo ops/s: 208599.72
+[DEBUG] stress-ng total bogo ops/s: 208599.72
 
 [+] Features extracted and saved to logs/alloc/iter_3/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          17778.222
-  avg_free_vmstat_MB                    3064.366
-  avg_iowait                              20.097
-  avg_free_mb                           3072.543
-  avg_swap_used_mb                       618.027
-  avg_available_mb                      2805.935
-  avg_cache_mb                           298.736
-  avg_pgfault                           9862.563
-  avg_pgmajfault                           1.028
+  avg_so_kBps                           3734.831
+  avg_free_vmstat_MB                    3724.963
+  avg_iowait                               8.438
+  avg_free_mb                           3709.144
+  avg_swap_used_mb                        329.76
+  avg_available_mb                      3487.479
+  avg_cache_mb                           388.457
+  avg_pgfault                          14676.943
+  avg_pgmajfault                           2.609
   avg_pswpin                                 0.0
-  avg_pswpout                           4507.042
+  avg_pswpout                            954.989
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       153592.56
-  memory_pressure_score                   10.506
+  bogo_ops_per_s                       208599.72
+  memory_pressure_score                    4.733
 [D] Tuned done. Features: logs/alloc/iter_3/after/mem_features_full.json
 [✓] Iteration 3 complete for alloc
 
@@ -532,55 +532,55 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_4/before)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [267207] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [267207] dispatching hogs: 4 vm
-stress-ng: info:  [267207] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [267207] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [267207]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [267207] vm             10339299     90.11    155.75     39.46    114736.11       52965.52
-stress-ng: info:  [267207] skipped: 0
-stress-ng: info:  [267207] passed: 4: vm (4)
-stress-ng: info:  [267207] failed: 0
-stress-ng: info:  [267207] metrics untrustworthy: 0
-stress-ng: info:  [267207] successful run completed in 1 min, 30.34 secs
+stress-ng: info:  [288277] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [288277] dispatching hogs: 4 vm
+stress-ng: info:  [288277] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [288277] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [288277]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [288277] vm              8160000     95.16      0.00      0.67     85747.31    12146743.38
+stress-ng: info:  [288277] skipped: 0
+stress-ng: info:  [288277] passed: 4: vm (4)
+stress-ng: info:  [288277] failed: 0
+stress-ng: info:  [288277] metrics untrustworthy: 0
+stress-ng: info:  [288277] successful run completed in 1 min, 35.27 secs
 [+] Workload completed. Metrics: logs/alloc/iter_4/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_4/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 82
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 134914.25, 'avg_pgmajfault': 0.77, 'avg_pswpin': 0.0, 'avg_pswpout': 9876.54}
-[DEBUG] stress-ng stressor bogo ops/s: 114736.11
-[DEBUG] stress-ng total bogo ops/s: 114736.11
+[DEBUG] meminfo snapshots: 81
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 119572.14, 'avg_pgmajfault': 0.52, 'avg_pswpin': 0.0, 'avg_pswpout': 3065.94}
+[DEBUG] stress-ng stressor bogo ops/s: 85747.31
+[DEBUG] stress-ng total bogo ops/s: 85747.31
 
 [+] Features extracted and saved to logs/alloc/iter_4/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          37647.435
-  avg_free_vmstat_MB                    2932.074
-  avg_iowait                              25.247
-  avg_free_mb                           2932.976
-  avg_swap_used_mb                       815.329
-  avg_available_mb                      3122.736
-  avg_cache_mb                           300.963
-  avg_pgfault                         134914.247
-  avg_pgmajfault                           0.765
+  avg_so_kBps                          11913.476
+  avg_free_vmstat_MB                    3219.586
+  avg_iowait                              31.619
+  avg_free_mb                           3217.427
+  avg_swap_used_mb                       743.667
+  avg_available_mb                      3418.984
+  avg_cache_mb                           312.669
+  avg_pgfault                         119572.138
+  avg_pgmajfault                           0.525
   avg_pswpin                                 0.0
-  avg_pswpout                           9876.543
+  avg_pswpout                           3065.938
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       114736.11
-  memory_pressure_score                    19.63
+  bogo_ops_per_s                        85747.31
+  memory_pressure_score                   19.995
 [B] Baseline done. Features: logs/alloc/iter_4/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 114736.11
-Reason                 : High swap activity: si+so = 37647.4 KB/s
+Baseline bogo ops/s    : 85747.31
+Reason                 : High swap activity: si+so = 11913.5 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -614,7 +614,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 37647.4 KB/s
+  - High swap activity: si+so = 11913.5 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -635,47 +635,47 @@ Parameter                           Bad Baseline    Tuned
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_4/after)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [268208] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [268208] dispatching hogs: 4 vm
-stress-ng: info:  [268208] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [268208] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [268208]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [268208] vm             14868227     93.81     56.85      5.85    158492.83      237123.47
-stress-ng: info:  [268208] skipped: 0
-stress-ng: info:  [268208] passed: 4: vm (4)
-stress-ng: info:  [268208] failed: 0
-stress-ng: info:  [268208] metrics untrustworthy: 0
-stress-ng: info:  [268208] successful run completed in 1 min, 35.16 secs
+stress-ng: info:  [289200] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [289200] dispatching hogs: 4 vm
+stress-ng: info:  [289200] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [289200] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [289200]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [289200] vm              8352831     90.00    125.64     13.27     92806.90       60131.11
+stress-ng: info:  [289200] skipped: 0
+stress-ng: info:  [289200] passed: 4: vm (4)
+stress-ng: info:  [289200] failed: 0
+stress-ng: info:  [289200] metrics untrustworthy: 0
+stress-ng: info:  [289200] successful run completed in 1 min, 30.01 secs
 [+] Workload completed. Metrics: logs/alloc/iter_4/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_4/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 90
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 15584.26, 'avg_pgmajfault': 0.97, 'avg_pswpin': 0.0, 'avg_pswpout': 13845.76}
-[DEBUG] stress-ng stressor bogo ops/s: 158492.83
-[DEBUG] stress-ng total bogo ops/s: 158492.83
+[DEBUG] meminfo snapshots: 85
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 4172.87, 'avg_pgmajfault': 0.86, 'avg_pswpin': 0.0, 'avg_pswpout': 7619.05}
+[DEBUG] stress-ng stressor bogo ops/s: 92806.90
+[DEBUG] stress-ng total bogo ops/s: 92806.90
 
 [+] Features extracted and saved to logs/alloc/iter_4/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          53577.457
-  avg_free_vmstat_MB                     3195.88
-  avg_iowait                              16.152
-  avg_free_mb                           3168.923
-  avg_swap_used_mb                       592.762
-  avg_available_mb                      2902.457
-  avg_cache_mb                            299.07
-  avg_pgfault                          15584.258
-  avg_pgmajfault                           0.966
+  avg_so_kBps                          28764.775
+  avg_free_vmstat_MB                     3243.07
+  avg_iowait                               30.64
+  avg_free_mb                           3226.745
+  avg_swap_used_mb                        957.25
+  avg_available_mb                      2966.765
+  avg_cache_mb                           311.785
+  avg_pgfault                           4172.869
+  avg_pgmajfault                           0.857
   avg_pswpin                                 0.0
-  avg_pswpout                          13845.764
+  avg_pswpout                           7619.048
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       158492.83
-  memory_pressure_score                   20.345
+  bogo_ops_per_s                         92806.9
+  memory_pressure_score                   15.466
 [D] Tuned done. Features: logs/alloc/iter_4/after/mem_features_full.json
 [✓] Iteration 4 complete for alloc
 
@@ -699,55 +699,55 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_5/before)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [269269] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [269269] dispatching hogs: 4 vm
-stress-ng: info:  [269269] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [269269] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [269269]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [269269] vm              8320000     95.25      0.01      1.01     87347.95     8161727.77
-stress-ng: info:  [269269] skipped: 0
-stress-ng: info:  [269269] passed: 4: vm (4)
-stress-ng: info:  [269269] failed: 0
-stress-ng: info:  [269269] metrics untrustworthy: 0
-stress-ng: info:  [269269] successful run completed in 1 min, 35.28 secs
+stress-ng: info:  [290160] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [290160] dispatching hogs: 4 vm
+stress-ng: info:  [290160] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [290160] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [290160]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [290160] vm             12298354     93.92     65.90     15.64    130948.77      150815.41
+stress-ng: info:  [290160] skipped: 0
+stress-ng: info:  [290160] passed: 4: vm (4)
+stress-ng: info:  [290160] failed: 0
+stress-ng: info:  [290160] metrics untrustworthy: 0
+stress-ng: info:  [290160] successful run completed in 1 min, 35.27 secs
 [+] Workload completed. Metrics: logs/alloc/iter_5/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_5/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 85
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 112878.62, 'avg_pgmajfault': 0.5, 'avg_pswpin': 0.0, 'avg_pswpout': 4453.41}
-[DEBUG] stress-ng stressor bogo ops/s: 87347.95
-[DEBUG] stress-ng total bogo ops/s: 87347.95
+[DEBUG] meminfo snapshots: 93
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 143897.0, 'avg_pgmajfault': 0.47, 'avg_pswpin': 0.0, 'avg_pswpout': 7799.8}
+[DEBUG] stress-ng stressor bogo ops/s: 130948.77
+[DEBUG] stress-ng total bogo ops/s: 130948.77
 
 [+] Features extracted and saved to logs/alloc/iter_5/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          16985.535
-  avg_free_vmstat_MB                    2864.725
-  avg_iowait                               28.43
-  avg_free_mb                           2877.086
-  avg_swap_used_mb                       690.043
-  avg_available_mb                      3066.645
-  avg_cache_mb                           300.359
-  avg_pgfault                         112878.622
-  avg_pgmajfault                             0.5
+  avg_so_kBps                          30210.716
+  avg_free_vmstat_MB                    3515.614
+  avg_iowait                                20.0
+  avg_free_mb                           3546.754
+  avg_swap_used_mb                       754.482
+  avg_available_mb                      3747.932
+  avg_cache_mb                           312.124
+  avg_pgfault                           143897.0
+  avg_pgmajfault                           0.467
   avg_pswpin                                 0.0
-  avg_pswpout                           4453.415
+  avg_pswpout                           7799.804
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        87347.95
-  memory_pressure_score                   13.896
+  bogo_ops_per_s                       130948.77
+  memory_pressure_score                   15.036
 [B] Baseline done. Features: logs/alloc/iter_5/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 87347.95
-Reason                 : High swap activity: si+so = 16985.5 KB/s
+Baseline bogo ops/s    : 130948.77
+Reason                 : High swap activity: si+so = 30210.7 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -781,7 +781,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 16985.5 KB/s
+  - High swap activity: si+so = 30210.7 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -802,47 +802,47 @@ Parameter                           Bad Baseline    Tuned
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: alloc (output: logs/alloc/iter_5/after)
 [+] Allocating 10 GB across 4 workers (> 8 GB RAM) to force swap...
-stress-ng: info:  [270206] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [270206] dispatching hogs: 4 vm
-stress-ng: info:  [270206] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [270206] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [270206]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [270206] vm             19115920     91.92    212.09     21.11    207968.48       81973.34
-stress-ng: info:  [270206] skipped: 0
-stress-ng: info:  [270206] passed: 4: vm (4)
-stress-ng: info:  [270206] failed: 0
-stress-ng: info:  [270206] metrics untrustworthy: 0
-stress-ng: info:  [270206] successful run completed in 1 min, 35.17 secs
+stress-ng: info:  [291192] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [291192] dispatching hogs: 4 vm
+stress-ng: info:  [291192] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [291192] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [291192]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [291192] vm             16262943     90.02    244.02     23.78    180657.17       60729.41
+stress-ng: info:  [291192] skipped: 0
+stress-ng: info:  [291192] passed: 4: vm (4)
+stress-ng: info:  [291192] failed: 0
+stress-ng: info:  [291192] metrics untrustworthy: 0
+stress-ng: info:  [291192] successful run completed in 1 min, 30.08 secs
 [+] Workload completed. Metrics: logs/alloc/iter_5/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/alloc/iter_5/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 92
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 15263.79, 'avg_pgmajfault': 0.53, 'avg_pswpin': 0.0, 'avg_pswpout': 17910.26}
-[DEBUG] stress-ng stressor bogo ops/s: 207968.48
-[DEBUG] stress-ng total bogo ops/s: 207968.48
+[DEBUG] meminfo snapshots: 84
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 14467.81, 'avg_pgmajfault': 0.6, 'avg_pswpin': 0.0, 'avg_pswpout': 15421.69}
+[DEBUG] stress-ng stressor bogo ops/s: 180657.17
+[DEBUG] stress-ng total bogo ops/s: 180657.17
 
 [+] Features extracted and saved to logs/alloc/iter_5/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          68624.979
-  avg_free_vmstat_MB                    3351.136
-  avg_iowait                               7.368
-  avg_free_mb                           3348.988
-  avg_swap_used_mb                       417.022
-  avg_available_mb                       3082.63
-  avg_cache_mb                           299.401
-  avg_pgfault                          15263.791
-  avg_pgmajfault                           0.527
+  avg_so_kBps                          60236.082
+  avg_free_vmstat_MB                    3642.534
+  avg_iowait                              12.012
+  avg_free_mb                           3649.329
+  avg_swap_used_mb                       572.849
+  avg_available_mb                      3388.902
+  avg_cache_mb                           310.858
+  avg_pgfault                          14467.807
+  avg_pgmajfault                           0.602
   avg_pswpin                                 0.0
-  avg_pswpout                          17910.264
+  avg_pswpout                          15421.687
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                       207968.48
-  memory_pressure_score                   22.659
+  bogo_ops_per_s                       180657.17
+  memory_pressure_score                    6.512
 [D] Tuned done. Features: logs/alloc/iter_5/after/mem_features_full.json
 [✓] Iteration 5 complete for alloc
 
@@ -869,56 +869,56 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_1/before)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [271236] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [271236] dispatching hogs: 4 vm
-stress-ng: info:  [271236] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [271236] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [271236]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [271236] vm              5406156     93.88     58.23     21.84     57585.75       67513.74
-stress-ng: info:  [271236] skipped: 0
-stress-ng: info:  [271236] passed: 4: vm (4)
-stress-ng: info:  [271236] failed: 0
-stress-ng: info:  [271236] metrics untrustworthy: 0
-stress-ng: info:  [271236] successful run completed in 1 min, 35.27 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [292136] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [292136] dispatching hogs: 4 vm
+stress-ng: info:  [292136] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [292136] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [292136]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [292136] vm             15523609     90.04    237.08     59.52    172405.55       52338.43
+stress-ng: info:  [292136] skipped: 0
+stress-ng: info:  [292136] passed: 4: vm (4)
+stress-ng: info:  [292136] failed: 0
+stress-ng: info:  [292136] metrics untrustworthy: 0
+stress-ng: info:  [292136] successful run completed in 1 min, 30.06 secs
 [+] Workload completed. Metrics: logs/cache/iter_1/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_1/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 95
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 249034.04, 'avg_pgmajfault': 0.82, 'avg_pswpin': 0.0, 'avg_pswpout': 7950.76}
-[DEBUG] stress-ng stressor bogo ops/s: 57585.75
-[DEBUG] stress-ng total bogo ops/s: 57585.75
+[DEBUG] meminfo snapshots: 93
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 178653.0, 'avg_pgmajfault': 2.83, 'avg_pswpin': 0.02, 'avg_pswpout': 12173.91}
+[DEBUG] stress-ng stressor bogo ops/s: 172405.55
+[DEBUG] stress-ng total bogo ops/s: 172405.55
 
 [+] Features extracted and saved to logs/cache/iter_1/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
-  avg_si_kBps                                0.0
-  avg_so_kBps                          31150.625
-  avg_free_vmstat_MB                    2835.689
-  avg_iowait                              13.656
-  avg_free_mb                           2819.162
-  avg_swap_used_mb                       618.896
-  avg_available_mb                       3017.11
-  avg_cache_mb                           309.087
-  avg_pgfault                         249034.043
-  avg_pgmajfault                           0.819
-  avg_pswpin                                 0.0
-  avg_pswpout                           7950.755
+  avg_si_kBps                              0.085
+  avg_so_kBps                          47660.319
+  avg_free_vmstat_MB                    3733.714
+  avg_iowait                               9.085
+  avg_free_mb                           3719.845
+  avg_swap_used_mb                       485.638
+  avg_available_mb                      3950.546
+  avg_cache_mb                           342.214
+  avg_pgfault                           178653.0
+  avg_pgmajfault                           2.826
+  avg_pswpin                               0.022
+  avg_pswpout                          12173.913
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        57585.75
-  memory_pressure_score                   16.495
+  bogo_ops_per_s                       172405.55
+  memory_pressure_score                   10.795
 [B] Baseline done. Features: logs/cache/iter_1/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 57585.75
-Reason                 : High swap activity: si+so = 31150.6 KB/s
+Baseline bogo ops/s    : 172405.55
+Reason                 : High swap activity: si+so = 47660.4 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -952,7 +952,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 31150.6 KB/s
+  - High swap activity: si+so = 47660.4 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -972,48 +972,48 @@ Parameter                           Bad Baseline    Tuned
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_1/after)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [272336] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [272336] dispatching hogs: 4 vm
-stress-ng: info:  [272336] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [272336] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [272336]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [272336] vm              4400000     95.20      0.01      0.81     46217.81     5391172.45
-stress-ng: info:  [272336] skipped: 0
-stress-ng: info:  [272336] passed: 4: vm (4)
-stress-ng: info:  [272336] failed: 0
-stress-ng: info:  [272336] metrics untrustworthy: 0
-stress-ng: info:  [272336] successful run completed in 1 min, 35.34 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [293213] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [293213] dispatching hogs: 4 vm
+stress-ng: info:  [293213] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [293213] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [293213]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [293213] vm             17600000     95.12      0.01      0.52    185024.59    33811886.80
+stress-ng: info:  [293213] skipped: 0
+stress-ng: info:  [293213] passed: 4: vm (4)
+stress-ng: info:  [293213] failed: 0
+stress-ng: info:  [293213] metrics untrustworthy: 0
+stress-ng: info:  [293213] successful run completed in 1 min, 35.19 secs
 [+] Workload completed. Metrics: logs/cache/iter_1/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_1/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 91
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 11984.02, 'avg_pgmajfault': 0.58, 'avg_pswpin': 0.0, 'avg_pswpout': 9037.16}
-[DEBUG] stress-ng stressor bogo ops/s: 46217.81
-[DEBUG] stress-ng total bogo ops/s: 46217.81
+[DEBUG] meminfo snapshots: 97
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 12731.05, 'avg_pgmajfault': 0.53, 'avg_pswpin': 0.0, 'avg_pswpout': 8908.8}
+[DEBUG] stress-ng stressor bogo ops/s: 185024.59
+[DEBUG] stress-ng total bogo ops/s: 185024.59
 
 [+] Features extracted and saved to logs/cache/iter_1/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          34656.138
-  avg_free_vmstat_MB                    2534.402
-  avg_iowait                              26.734
-  avg_free_mb                           2511.943
-  avg_swap_used_mb                       848.184
-  avg_available_mb                      2245.869
-  avg_cache_mb                           299.865
-  avg_pgfault                          11984.022
-  avg_pgmajfault                           0.578
+  avg_so_kBps                          34622.626
+  avg_free_vmstat_MB                    3641.188
+  avg_iowait                              10.929
+  avg_free_mb                           3659.782
+  avg_swap_used_mb                       386.526
+  avg_available_mb                      3399.292
+  avg_cache_mb                           310.862
+  avg_pgfault                          12731.052
+  avg_pgmajfault                           0.531
   avg_pswpin                                 0.0
-  avg_pswpout                           9037.156
+  avg_pswpout                           8908.802
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        46217.81
-  memory_pressure_score                    17.26
+  bogo_ops_per_s                       185024.59
+  memory_pressure_score                     5.91
 [D] Tuned done. Features: logs/cache/iter_1/after/mem_features_full.json
 [✓] Iteration 1 complete for cache
 
@@ -1036,56 +1036,56 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_2/before)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [273355] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [273355] dispatching hogs: 4 vm
-stress-ng: info:  [273355] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [273355] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [273355]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [273355] vm              5051135     90.16    178.35     75.94     56025.87       19863.61
-stress-ng: info:  [273355] skipped: 0
-stress-ng: info:  [273355] passed: 4: vm (4)
-stress-ng: info:  [273355] failed: 0
-stress-ng: info:  [273355] metrics untrustworthy: 0
-stress-ng: info:  [273355] successful run completed in 1 min, 30.42 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [294274] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [294274] dispatching hogs: 4 vm
+stress-ng: info:  [294274] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [294274] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [294274]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [294274] vm             18054724     90.08    272.21     62.77    200433.99       53899.00
+stress-ng: info:  [294274] skipped: 0
+stress-ng: info:  [294274] passed: 4: vm (4)
+stress-ng: info:  [294274] failed: 0
+stress-ng: info:  [294274] metrics untrustworthy: 0
+stress-ng: info:  [294274] successful run completed in 1 min, 30.11 secs
 [+] Workload completed. Metrics: logs/cache/iter_2/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_2/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 91
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 238335.02, 'avg_pgmajfault': 0.47, 'avg_pswpin': 0.0, 'avg_pswpout': 18034.97}
-[DEBUG] stress-ng stressor bogo ops/s: 56025.87
-[DEBUG] stress-ng total bogo ops/s: 56025.87
+[DEBUG] meminfo snapshots: 87
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 227935.57, 'avg_pgmajfault': 0.49, 'avg_pswpin': 0.0, 'avg_pswpout': 9302.33}
+[DEBUG] stress-ng stressor bogo ops/s: 200433.99
+[DEBUG] stress-ng total bogo ops/s: 200433.99
 
 [+] Features extracted and saved to logs/cache/iter_2/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          69021.925
-  avg_free_vmstat_MB                    2753.138
-  avg_iowait                              14.344
-  avg_free_mb                           2759.551
-  avg_swap_used_mb                        646.08
-  avg_available_mb                      2949.364
-  avg_cache_mb                           300.917
-  avg_pgfault                         238335.022
-  avg_pgmajfault                           0.467
+  avg_so_kBps                          34783.402
+  avg_free_vmstat_MB                    3956.506
+  avg_iowait                               4.924
+  avg_free_mb                           3998.032
+  avg_swap_used_mb                       308.111
+  avg_available_mb                      4202.095
+  avg_cache_mb                           314.918
+  avg_pgfault                          227935.57
+  avg_pgmajfault                           0.488
   avg_pswpin                                 0.0
-  avg_pswpout                          18034.967
+  avg_pswpout                           9302.326
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        56025.87
-  memory_pressure_score                   27.868
+  bogo_ops_per_s                       200433.99
+  memory_pressure_score                    10.44
 [B] Baseline done. Features: logs/cache/iter_2/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 56025.87
-Reason                 : High swap activity: si+so = 69021.9 KB/s
+Baseline bogo ops/s    : 200433.99
+Reason                 : High swap activity: si+so = 34783.4 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -1119,7 +1119,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 69021.9 KB/s
+  - High swap activity: si+so = 34783.4 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -1139,48 +1139,48 @@ Parameter                           Bad Baseline    Tuned
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_2/after)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [274393] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [274393] dispatching hogs: 4 vm
-stress-ng: info:  [274393] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [274393] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [274393]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [274393] vm              3400000     95.19      0.00      0.79     35716.72     4303851.95
-stress-ng: info:  [274393] skipped: 0
-stress-ng: info:  [274393] passed: 4: vm (4)
-stress-ng: info:  [274393] failed: 0
-stress-ng: info:  [274393] metrics untrustworthy: 0
-stress-ng: info:  [274393] successful run completed in 1 min, 35.29 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [295248] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [295248] dispatching hogs: 4 vm
+stress-ng: info:  [295248] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [295248] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [295248]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [295248] vm             17712645     90.07    266.26     21.99    196657.49       61447.46
+stress-ng: info:  [295248] skipped: 0
+stress-ng: info:  [295248] passed: 4: vm (4)
+stress-ng: info:  [295248] failed: 0
+stress-ng: info:  [295248] metrics untrustworthy: 0
+stress-ng: info:  [295248] successful run completed in 1 min, 30.27 secs
 [+] Workload completed. Metrics: logs/cache/iter_2/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_2/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 85
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 12225.89, 'avg_pgmajfault': 0.75, 'avg_pswpin': 0.0, 'avg_pswpout': 6517.54}
-[DEBUG] stress-ng stressor bogo ops/s: 35716.72
-[DEBUG] stress-ng total bogo ops/s: 35716.72
+[DEBUG] meminfo snapshots: 89
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 10662.89, 'avg_pgmajfault': 0.78, 'avg_pswpin': 0.0, 'avg_pswpout': 12727.27}
+[DEBUG] stress-ng stressor bogo ops/s: 196657.49
+[DEBUG] stress-ng total bogo ops/s: 196657.49
 
 [+] Features extracted and saved to logs/cache/iter_2/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          24885.659
-  avg_free_vmstat_MB                     2394.07
-  avg_iowait                              25.977
-  avg_free_mb                           2402.478
-  avg_swap_used_mb                      1107.393
-  avg_available_mb                      2137.046
-  avg_cache_mb                           301.292
-  avg_pgfault                          12225.893
-  avg_pgmajfault                            0.75
+  avg_so_kBps                          49778.611
+  avg_free_vmstat_MB                    3688.647
+  avg_iowait                              10.167
+  avg_free_mb                           3676.044
+  avg_swap_used_mb                       449.925
+  avg_available_mb                      3415.803
+  avg_cache_mb                           311.237
+  avg_pgfault                          10662.886
+  avg_pgmajfault                           0.784
   avg_pswpin                                 0.0
-  avg_pswpout                           6517.536
+  avg_pswpout                          12727.273
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        35716.72
-  memory_pressure_score                   14.143
+  bogo_ops_per_s                       196657.49
+  memory_pressure_score                    5.457
 [D] Tuned done. Features: logs/cache/iter_2/after/mem_features_full.json
 [✓] Iteration 2 complete for cache
 
@@ -1203,56 +1203,56 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_3/before)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [275358] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [275358] dispatching hogs: 4 vm
-stress-ng: info:  [275358] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [275358] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [275358]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [275358] vm              2700255     93.89     67.55     22.97     28761.23       29833.17
-stress-ng: info:  [275358] skipped: 0
-stress-ng: info:  [275358] passed: 4: vm (4)
-stress-ng: info:  [275358] failed: 0
-stress-ng: info:  [275358] metrics untrustworthy: 0
-stress-ng: info:  [275358] successful run completed in 1 min, 35.18 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [296241] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [296241] dispatching hogs: 4 vm
+stress-ng: info:  [296241] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [296241] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [296241]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [296241] vm             13323378     93.86     66.70     18.97    141950.76      155505.94
+stress-ng: info:  [296241] skipped: 0
+stress-ng: info:  [296241] passed: 4: vm (4)
+stress-ng: info:  [296241] failed: 0
+stress-ng: info:  [296241] metrics untrustworthy: 0
+stress-ng: info:  [296241] successful run completed in 1 min, 35.19 secs
 [+] Workload completed. Metrics: logs/cache/iter_3/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_3/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 89
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 133999.79, 'avg_pgmajfault': 0.76, 'avg_pswpin': 0.0, 'avg_pswpout': 1859.64}
-[DEBUG] stress-ng stressor bogo ops/s: 28761.23
-[DEBUG] stress-ng total bogo ops/s: 28761.23
+[DEBUG] meminfo snapshots: 94
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 158074.82, 'avg_pgmajfault': 0.45, 'avg_pswpin': 0.0, 'avg_pswpout': 14877.63}
+[DEBUG] stress-ng stressor bogo ops/s: 141950.76
+[DEBUG] stress-ng total bogo ops/s: 141950.76
 
 [+] Features extracted and saved to logs/cache/iter_3/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                           7069.484
-  avg_free_vmstat_MB                    2541.466
-  avg_iowait                              27.495
-  avg_free_mb                           2556.973
-  avg_swap_used_mb                       547.859
-  avg_available_mb                      2748.935
-  avg_cache_mb                           303.369
-  avg_pgfault                         133999.793
-  avg_pgmajfault                           0.759
+  avg_so_kBps                          57643.594
+  avg_free_vmstat_MB                    3616.382
+  avg_iowait                              14.365
+  avg_free_mb                           3624.466
+  avg_swap_used_mb                       480.927
+  avg_available_mb                      3825.916
+  avg_cache_mb                           312.467
+  avg_pgfault                         158074.817
+  avg_pgmajfault                           0.452
   avg_pswpin                                 0.0
-  avg_pswpout                           1859.644
+  avg_pswpout                          14877.634
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        28761.23
-  memory_pressure_score                   11.004
+  bogo_ops_per_s                       141950.76
+  memory_pressure_score                   12.715
 [B] Baseline done. Features: logs/cache/iter_3/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 28761.23
-Reason                 : High swap activity: si+so = 7069.5 KB/s
+Baseline bogo ops/s    : 141950.76
+Reason                 : High swap activity: si+so = 57643.6 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -1286,7 +1286,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 7069.5 KB/s
+  - High swap activity: si+so = 57643.6 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -1306,48 +1306,48 @@ Parameter                           Bad Baseline    Tuned
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_3/after)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [276362] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [276362] dispatching hogs: 4 vm
-stress-ng: info:  [276362] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [276362] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [276362]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [276362] vm              4146867     90.87    147.31     26.73     45633.20       23827.04
-stress-ng: info:  [276362] skipped: 0
-stress-ng: info:  [276362] passed: 4: vm (4)
-stress-ng: info:  [276362] failed: 0
-stress-ng: info:  [276362] metrics untrustworthy: 0
-stress-ng: info:  [276362] successful run completed in 1 min, 31.77 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [297264] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [297264] dispatching hogs: 4 vm
+stress-ng: info:  [297264] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [297264] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [297264]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [297264] vm             13653355     92.19    140.45     18.31    148101.94       85997.44
+stress-ng: info:  [297264] skipped: 0
+stress-ng: info:  [297264] passed: 4: vm (4)
+stress-ng: info:  [297264] failed: 0
+stress-ng: info:  [297264] metrics untrustworthy: 0
+stress-ng: info:  [297264] successful run completed in 1 min, 34.74 secs
 [+] Workload completed. Metrics: logs/cache/iter_3/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_3/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 81
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 21095.94, 'avg_pgmajfault': 0.6, 'avg_pswpin': 0.0, 'avg_pswpout': 16291.49}
-[DEBUG] stress-ng stressor bogo ops/s: 45633.20
-[DEBUG] stress-ng total bogo ops/s: 45633.20
+[DEBUG] meminfo snapshots: 92
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 15945.27, 'avg_pgmajfault': 0.78, 'avg_pswpin': 0.0, 'avg_pswpout': 19118.43}
+[DEBUG] stress-ng stressor bogo ops/s: 148101.94
+[DEBUG] stress-ng total bogo ops/s: 148101.94
 
 [+] Features extracted and saved to logs/cache/iter_3/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                           62811.12
-  avg_free_vmstat_MB                    2530.787
-  avg_iowait                              25.012
-  avg_free_mb                           2528.519
-  avg_swap_used_mb                       881.329
-  avg_available_mb                      2262.398
-  avg_cache_mb                           299.518
-  avg_pgfault                          21095.938
-  avg_pgmajfault                             0.6
+  avg_so_kBps                          74279.859
+  avg_free_vmstat_MB                    3499.363
+  avg_iowait                                15.0
+  avg_free_mb                           3491.224
+  avg_swap_used_mb                       751.926
+  avg_available_mb                       3232.65
+  avg_cache_mb                           314.647
+  avg_pgfault                          15945.275
+  avg_pgmajfault                            0.78
   avg_pswpin                                 0.0
-  avg_pswpout                          16291.488
+  avg_pswpout                          19118.429
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                         45633.2
-  memory_pressure_score                   25.413
+  bogo_ops_per_s                       148101.94
+  memory_pressure_score                    8.058
 [D] Tuned done. Features: logs/cache/iter_3/after/mem_features_full.json
 [✓] Iteration 3 complete for cache
 
@@ -1370,56 +1370,56 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_4/before)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [277296] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [277296] dispatching hogs: 4 vm
-stress-ng: info:  [277296] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [277296] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [277296]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [277296] vm              4585491     92.59     83.45     32.77     49525.32       39455.14
-stress-ng: info:  [277296] skipped: 0
-stress-ng: info:  [277296] passed: 4: vm (4)
-stress-ng: info:  [277296] failed: 0
-stress-ng: info:  [277296] metrics untrustworthy: 0
-stress-ng: info:  [277296] successful run completed in 1 min, 35.14 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [298349] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [298349] dispatching hogs: 4 vm
+stress-ng: info:  [298349] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [298349] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [298349]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [298349] vm             15568334     92.59    121.69     30.56    168134.91      102256.73
+stress-ng: info:  [298349] skipped: 0
+stress-ng: info:  [298349] passed: 4: vm (4)
+stress-ng: info:  [298349] failed: 0
+stress-ng: info:  [298349] metrics untrustworthy: 0
+stress-ng: info:  [298349] successful run completed in 1 min, 35.20 secs
 [+] Workload completed. Metrics: logs/cache/iter_4/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_4/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 84
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 239135.12, 'avg_pgmajfault': 5.06, 'avg_pswpin': 0.0, 'avg_pswpout': 12541.13}
-[DEBUG] stress-ng stressor bogo ops/s: 49525.32
-[DEBUG] stress-ng total bogo ops/s: 49525.32
+[DEBUG] meminfo snapshots: 88
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 187834.83, 'avg_pgmajfault': 0.61, 'avg_pswpin': 0.0, 'avg_pswpout': 18062.02}
+[DEBUG] stress-ng stressor bogo ops/s: 168134.91
+[DEBUG] stress-ng total bogo ops/s: 168134.91
 
 [+] Features extracted and saved to logs/cache/iter_4/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                           47314.83
-  avg_free_vmstat_MB                    2742.323
-  avg_iowait                              21.295
-  avg_free_mb                            2735.67
-  avg_swap_used_mb                       655.249
-  avg_available_mb                      2928.742
-  avg_cache_mb                            304.23
-  avg_pgfault                          239135.12
-  avg_pgmajfault                            5.06
+  avg_so_kBps                          69829.044
+  avg_free_vmstat_MB                    3714.531
+  avg_iowait                                10.3
+  avg_free_mb                           3718.735
+  avg_swap_used_mb                        518.08
+  avg_available_mb                      3920.902
+  avg_cache_mb                           313.191
+  avg_pgfault                         187834.828
+  avg_pgmajfault                           0.609
   avg_pswpin                                 0.0
-  avg_pswpout                          12541.133
+  avg_pswpout                          18062.023
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        49525.32
-  memory_pressure_score                   23.105
+  bogo_ops_per_s                       168134.91
+  memory_pressure_score                   11.724
 [B] Baseline done. Features: logs/cache/iter_4/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 49525.32
-Reason                 : High swap activity: si+so = 47314.8 KB/s
+Baseline bogo ops/s    : 168134.91
+Reason                 : High swap activity: si+so = 69829.0 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -1453,7 +1453,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 47314.8 KB/s
+  - High swap activity: si+so = 69829.0 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -1473,48 +1473,48 @@ Parameter                           Bad Baseline    Tuned
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_4/after)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [278322] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [278322] dispatching hogs: 4 vm
-stress-ng: info:  [278322] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [278322] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [278322]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [278322] vm              4243455     90.00    155.25     19.55     47147.22       24275.23
-stress-ng: info:  [278322] skipped: 0
-stress-ng: info:  [278322] passed: 4: vm (4)
-stress-ng: info:  [278322] failed: 0
-stress-ng: info:  [278322] metrics untrustworthy: 0
-stress-ng: info:  [278322] successful run completed in 1 min, 30.01 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [299343] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [299343] dispatching hogs: 4 vm
+stress-ng: info:  [299343] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [299343] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [299343]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [299343] vm             14851029     93.91     83.65      6.36    158135.90      165006.37
+stress-ng: info:  [299343] skipped: 0
+stress-ng: info:  [299343] passed: 4: vm (4)
+stress-ng: info:  [299343] failed: 0
+stress-ng: info:  [299343] metrics untrustworthy: 0
+stress-ng: info:  [299343] successful run completed in 1 min, 35.29 secs
 [+] Workload completed. Metrics: logs/cache/iter_4/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_4/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 92
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 6588.54, 'avg_pgmajfault': 0.73, 'avg_pswpin': 0.0, 'avg_pswpout': 8791.21}
-[DEBUG] stress-ng stressor bogo ops/s: 47147.22
-[DEBUG] stress-ng total bogo ops/s: 47147.22
+[DEBUG] meminfo snapshots: 95
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 12805.47, 'avg_pgmajfault': 0.51, 'avg_pswpin': 0.0, 'avg_pswpout': 6569.1}
+[DEBUG] stress-ng stressor bogo ops/s: 158135.90
+[DEBUG] stress-ng total bogo ops/s: 158135.90
 
 [+] Features extracted and saved to logs/cache/iter_4/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          34409.151
-  avg_free_vmstat_MB                    2533.754
-  avg_iowait                              24.548
-  avg_free_mb                           2520.384
-  avg_swap_used_mb                       795.402
-  avg_available_mb                      2256.567
-  avg_cache_mb                           304.196
-  avg_pgfault                           6588.538
-  avg_pgmajfault                           0.725
+  avg_so_kBps                          25456.135
+  avg_free_vmstat_MB                    3469.743
+  avg_iowait                              18.521
+  avg_free_mb                           3481.768
+  avg_swap_used_mb                       793.944
+  avg_available_mb                       3221.32
+  avg_cache_mb                           311.081
+  avg_pgfault                          12805.473
+  avg_pgmajfault                           0.505
   avg_pswpin                                 0.0
-  avg_pswpout                           8791.209
+  avg_pswpout                           6569.097
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        47147.22
-  memory_pressure_score                   16.559
+  bogo_ops_per_s                        158135.9
+  memory_pressure_score                    9.709
 [D] Tuned done. Features: logs/cache/iter_4/after/mem_features_full.json
 [✓] Iteration 4 complete for cache
 
@@ -1537,56 +1537,56 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_5/before)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [279366] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [279366] dispatching hogs: 4 vm
-stress-ng: info:  [279366] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [279366] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [279366]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [279366] vm              5414956     93.87     38.39     15.57     57687.50      100347.13
-stress-ng: info:  [279366] skipped: 0
-stress-ng: info:  [279366] passed: 4: vm (4)
-stress-ng: info:  [279366] failed: 0
-stress-ng: info:  [279366] metrics untrustworthy: 0
-stress-ng: info:  [279366] successful run completed in 1 min, 35.18 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [300427] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [300427] dispatching hogs: 4 vm
+stress-ng: info:  [300427] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [300427] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [300427]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [300427] vm             17077616     90.05    257.09     60.21    189641.70       53821.87
+stress-ng: info:  [300427] skipped: 0
+stress-ng: info:  [300427] passed: 4: vm (4)
+stress-ng: info:  [300427] failed: 0
+stress-ng: info:  [300427] metrics untrustworthy: 0
+stress-ng: info:  [300427] successful run completed in 1 min, 30.10 secs
 [+] Workload completed. Metrics: logs/cache/iter_5/before/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_5/before
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 93
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 255046.58, 'avg_pgmajfault': 0.55, 'avg_pswpin': 0.0, 'avg_pswpout': 4749.95}
-[DEBUG] stress-ng stressor bogo ops/s: 57687.50
-[DEBUG] stress-ng total bogo ops/s: 57687.50
+[DEBUG] meminfo snapshots: 92
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 194462.91, 'avg_pgmajfault': 0.45, 'avg_pswpin': 0.0, 'avg_pswpout': 12307.69}
+[DEBUG] stress-ng stressor bogo ops/s: 189641.70
+[DEBUG] stress-ng total bogo ops/s: 189641.70
 
 [+] Features extracted and saved to logs/cache/iter_5/before/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          18596.096
-  avg_free_vmstat_MB                    2774.283
-  avg_iowait                              12.181
-  avg_free_mb                           2788.929
-  avg_swap_used_mb                       489.986
-  avg_available_mb                      2983.361
-  avg_cache_mb                           305.694
-  avg_pgfault                         255046.576
-  avg_pgmajfault                           0.554
+  avg_so_kBps                          48172.968
+  avg_free_vmstat_MB                    3775.446
+  avg_iowait                               5.839
+  avg_free_mb                           3775.694
+  avg_swap_used_mb                       436.928
+  avg_available_mb                      3977.796
+  avg_cache_mb                           313.089
+  avg_pgfault                         194462.912
+  avg_pgmajfault                           0.451
   avg_pswpin                                 0.0
-  avg_pswpout                           4749.946
+  avg_pswpout                          12307.692
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                         57687.5
-  memory_pressure_score                    12.45
+  bogo_ops_per_s                        189641.7
+  memory_pressure_score                    9.726
 [B] Baseline done. Features: logs/cache/iter_5/before/mem_features_full.json
 [C] Computing + applying tuning...
 
 ===== Memory Tuning Decision =====
 
 Detected Workload Type : swap-heavy
-Baseline bogo ops/s    : 57687.50
-Reason                 : High swap activity: si+so = 18596.1 KB/s
+Baseline bogo ops/s    : 189641.70
+Reason                 : High swap activity: si+so = 48173.0 KB/s
 
 Parameter                           Bad Baseline    Tuned          
 -----------------------------------------------------------------
@@ -1620,7 +1620,7 @@ Parameter                           Bad Baseline    Tuned
 --- All Tuning Applied ---
 
 --- Reasons ---
-  - High swap activity: si+so = 18596.1 KB/s
+  - High swap activity: si+so = 48173.0 KB/s
   - swappiness=10: minimize anonymous page eviction (was 200 — 20× reduction)
   - vfs_cache_pressure=100: balanced eviction policy
   - dirty_ratio=20/10: allow write buffering to reduce flush-triggered eviction (was 5/2)
@@ -1640,48 +1640,48 @@ Parameter                           Bad Baseline    Tuned
 [+] Collecting system metadata...
 [+] Running workload (10 GB allocation > 8 GB RAM = forced swap)...
 [+] Running memory workload: cache (output: logs/cache/iter_5/after)
-[+] Running cache-pressure (4×2500MB ror sequential, 10GB > 8GB)...
-stress-ng: info:  [280408] setting to a 1 min, 30 secs run per stressor
-stress-ng: info:  [280408] dispatching hogs: 4 vm
-stress-ng: info:  [280408] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
-stress-ng: metrc: [280408] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
-stress-ng: metrc: [280408]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-stress-ng: metrc: [280408] vm              1960000     95.15      0.01      0.61     20599.25     3195508.03
-stress-ng: info:  [280408] skipped: 0
-stress-ng: info:  [280408] passed: 4: vm (4)
-stress-ng: info:  [280408] failed: 0
-stress-ng: info:  [280408] metrics untrustworthy: 0
-stress-ng: info:  [280408] successful run completed in 1 min, 35.25 secs
+[+] Running cache-pressure (4x2500MB walk-1d, 10GB > 8GB)...
+stress-ng: info:  [301474] setting to a 1 min, 30 secs run per stressor
+stress-ng: info:  [301474] dispatching hogs: 4 vm
+stress-ng: info:  [301474] note: /proc/sys/kernel/sched_autogroup_enabled is 1 and this can impact scheduling throughput for processes not attached to a tty. Setting this to 0 may improve performance metrics
+stress-ng: metrc: [301474] stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+stress-ng: metrc: [301474]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+stress-ng: metrc: [301474] vm             19729170     90.00    298.04     23.57    219207.00       61346.25
+stress-ng: info:  [301474] skipped: 0
+stress-ng: info:  [301474] passed: 4: vm (4)
+stress-ng: info:  [301474] failed: 0
+stress-ng: info:  [301474] metrics untrustworthy: 0
+stress-ng: info:  [301474] successful run completed in 1 min, 30.01 secs
 [+] Workload completed. Metrics: logs/cache/iter_5/after/stress_ng.log
 [+] Stopping monitoring...
 [+] Cleaning logs...
 [+] Done. Logs saved in logs/cache/iter_5/after
 Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'buff', 'cache', 'si', 'so', 'bi', 'bo', 'in', 'cs', 'us', 'sy', 'id', 'wa', 'st', 'gu']
-[DEBUG] meminfo snapshots: 87
-[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 9692.65, 'avg_pgmajfault': 0.86, 'avg_pswpin': 0.0, 'avg_pswpout': 5032.98}
-[DEBUG] stress-ng stressor bogo ops/s: 20599.25
-[DEBUG] stress-ng total bogo ops/s: 20599.25
+[DEBUG] meminfo snapshots: 90
+[DEBUG] /proc/vmstat deltas: {'avg_pgfault': 19230.27, 'avg_pgmajfault': 0.79, 'avg_pswpin': 0.0, 'avg_pswpout': 10786.52}
+[DEBUG] stress-ng stressor bogo ops/s: 219207.00
+[DEBUG] stress-ng total bogo ops/s: 219207.00
 
 [+] Features extracted and saved to logs/cache/iter_5/after/mem_features_full.json
 
   Feature                                  Value
   ----------------------------------------------
   avg_si_kBps                                0.0
-  avg_so_kBps                          19639.295
-  avg_free_vmstat_MB                    2414.518
-  avg_iowait                              35.307
-  avg_free_mb                           2414.879
-  avg_swap_used_mb                      1016.719
-  avg_available_mb                      2149.577
-  avg_cache_mb                           301.464
-  avg_pgfault                           9692.651
-  avg_pgmajfault                            0.86
+  avg_so_kBps                           42198.78
+  avg_free_vmstat_MB                    3749.369
+  avg_iowait                               5.648
+  avg_free_mb                           3744.472
+  avg_swap_used_mb                       405.793
+  avg_available_mb                      3484.772
+  avg_cache_mb                           312.449
+  avg_pgfault                           19230.27
+  avg_pgmajfault                           0.787
   avg_pswpin                                 0.0
-  avg_pswpout                           5032.977
+  avg_pswpout                          10786.517
   psi_some_avg10                             0.0
   psi_full_avg10                             0.0
-  bogo_ops_per_s                        20599.25
-  memory_pressure_score                   14.864
+  bogo_ops_per_s                        219207.0
+  memory_pressure_score                    3.497
 [D] Tuned done. Features: logs/cache/iter_5/after/mem_features_full.json
 [✓] Iteration 5 complete for cache
 
@@ -1701,12 +1701,11 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 
   Metric                             Baseline        Tuned     Change  Better?
   --------------------------------------------------------------------------
-  bogo ops/s                        119375.66    157453.41 +31.9%         [OK]
-  CPU iowait (%)                        21.99        17.89 -18.7%         [OK]
-  Page Faults/s                     134114.86     14037.02 -89.5%         [OK]
-  Swap-Out (KB/s)                    22039.12     37927.88 +72.1%         [!!]
-  Swap Used (MB)                       565.52       565.64 +0.0%         [!!]
-  Pressure Score                        14.12        16.06 +13.7%         [!!]
+  bogo ops/s                        157058.35    183324.21 +16.7%         [OK]
+  CPU iowait (%)                        14.35        12.58 -12.4%         [OK]
+  Page Faults/s                     179461.52     13091.10 -92.7%         [OK]
+  Swap-In (KB/s)                         0.00         0.00        N/A         
+  Pressure Score                        13.46         6.75 -49.9%         [OK]
 
   Saved: logs/alloc/avg_before.json
   Saved: logs/alloc/avg_after.json
@@ -1724,12 +1723,11 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 
   Metric                             Baseline        Tuned     Change  Better?
   --------------------------------------------------------------------------
-  bogo ops/s                         49917.13     39062.84 -21.7%         [!!]
-  CPU iowait (%)                        17.79        27.52 +54.6%         [!!]
-  Page Faults/s                     223110.11     12317.41 -94.5%         [OK]
-  Swap-Out (KB/s)                    34630.59     35280.27 +1.9%         [!!]
-  Swap Used (MB)                       591.61       929.81 +57.2%         [!!]
-  Pressure Score                        18.18        17.65 -3.0%         [OK]
+  bogo ops/s                        174513.38    181425.38 +4.0%         [OK]
+  CPU iowait (%)                         8.90        12.05 +35.4%         [!!]
+  Page Faults/s                     189392.23     14274.99 -92.5%         [OK]
+  Swap-In (KB/s)                         0.02         0.00 -100.0%         [OK]
+  Pressure Score                        11.08         6.53 -41.1%         [OK]
 
   Saved: logs/cache/avg_before.json
   Saved: logs/cache/avg_after.json
@@ -1740,21 +1738,17 @@ Enter run directory path: [DEBUG] vmstat columns: ['r', 'b', 'swpd', 'free', 'bu
 ========================================================
   Generating final comparison plots...
 ========================================================
-[+] comparison_plots_alloc_final/bogo_ops_per_s.png  (119375.7 -> 157453.4)
-[+] comparison_plots_alloc_final/avg_iowait.png  (22.0 -> 17.9)
-[+] comparison_plots_alloc_final/avg_pgfault.png  (134114.9 -> 14037.0)
-[+] comparison_plots_alloc_final/avg_so_kBps.png  (22039.1 -> 37927.9)
-[+] comparison_plots_alloc_final/avg_swap_used_mb.png  (565.5 -> 565.6)
+[+] comparison_plots_alloc_final/bogo_ops_per_s.png  (157058.3 -> 183324.2)
+[+] comparison_plots_alloc_final/avg_iowait.png  (14.4 -> 12.6)
+[+] comparison_plots_alloc_final/avg_pgfault.png  (179461.5 -> 13091.1)
 [SKIP] avg_si_kBps: both values are 0.
-[+] comparison_plots_alloc_final/memory_pressure_score.png  (14.1 -> 16.1)
+[+] comparison_plots_alloc_final/memory_pressure_score.png  (13.5 -> 6.7)
 [+] All averaged plots saved to comparison_plots_alloc_final/
-[+] comparison_plots_cache_final/bogo_ops_per_s.png  (49917.1 -> 39062.8)
-[+] comparison_plots_cache_final/avg_iowait.png  (17.8 -> 27.5)
-[+] comparison_plots_cache_final/avg_pgfault.png  (223110.1 -> 12317.4)
-[+] comparison_plots_cache_final/avg_so_kBps.png  (34630.6 -> 35280.3)
-[+] comparison_plots_cache_final/avg_swap_used_mb.png  (591.6 -> 929.8)
-[SKIP] avg_si_kBps: both values are 0.
-[+] comparison_plots_cache_final/memory_pressure_score.png  (18.2 -> 17.6)
+[+] comparison_plots_cache_final/bogo_ops_per_s.png  (174513.4 -> 181425.4)
+[+] comparison_plots_cache_final/avg_iowait.png  (8.9 -> 12.1)
+[+] comparison_plots_cache_final/avg_pgfault.png  (189392.2 -> 14275.0)
+[+] comparison_plots_cache_final/avg_si_kBps.png  (0.0 -> 0.0)
+[+] comparison_plots_cache_final/memory_pressure_score.png  (11.1 -> 6.5)
 [+] All averaged plots saved to comparison_plots_cache_final/
 
 ========================================================
