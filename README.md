@@ -1,6 +1,5 @@
 # Linux Performance Tuning
 
-> **Course:** Linux Performance Tuning (Sem 6) — IIIT Bangalore  
 > **Authors:** Kartikeya Dimri · Ayush Mishra · Harsh Sinha  
 > **Advisor:** Prof. B. Thangaraju  
 
